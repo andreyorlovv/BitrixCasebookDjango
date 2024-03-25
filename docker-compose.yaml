@@ -22,7 +22,7 @@ services:
       - djangonetwork
 
   redis:
-    image: redis:latest
+    image: redis:6.2.14-alpine
     ports:
       - "6379:6379"
     networks:
