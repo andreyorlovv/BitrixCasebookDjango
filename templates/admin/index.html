@@ -1,0 +1,59 @@
+{% extends 'admin/index.html' %}
+
+{% block content %}
+	{{ block.super }}
+
+    <div class="col-lg-9 col-12">
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="m-0">Панель управления парсером</h5>
+            </div>
+            <div class="card-body">
+{#                <form action="/" method="post">#}
+{##}
+{#                    {% csrf_token %}#}
+{#                    <div class="row">#}
+{#                        <div class="col"><h5>Выборка: </h5></div>#}
+{#                        <div class="col"><select name="Тест" id=""></select></div>#}
+{#                        <div class="col"><h5>Время между проверками в минутах: </h5></div>#}
+{#                        <div class="col"><input type="number"></div>#}
+{#                        <button type="submit">Отправить</button>#}
+{#                    </div>#}
+{#                </form>#}
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form_create.as_p }}
+                    <input type="submit" value="Добавить в обработку">
+                </form>
+
+        </div>
+    </div>
+    {% if res %}
+        {{ res }}
+    {% endif %}
+    {% if tasks %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="m-0">Задачи в работе</h5>
+            </div>
+            <div class="card-body">
+                {% for task in tasks %}
+                    <div class="container">
+                        <div class="row border rounded p-2">
+                            <div class="col-3" style="text-align: center; margin: auto"><h5>{{ task.name }}</h5></div>
+                            <div class="col"> Сканирование проводится каждые {{ task.interval }} минут(-ы) <br>
+                                В обработку попадают дела начиная с {{ task.time_delta }}</div>
+                            <div class="col" style="margin: auto; display: flex;
+                                                      align-items: center;
+                                                      justify-content: center;">
+                                <a href="/delete_task?id={{ task.task_id }}" class="btn btn-danger">Удалить</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    </div>
+{% endblock %}

@@ -1,0 +1,674 @@
+[
+    {
+        "model": "casebook.StopList",
+        "pk": 1,
+        "fields": {
+            "stopword": "акционерное общество"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 2,
+        "fields": {
+            "stopword": "акционерное"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 3,
+        "fields": {
+            "stopword": "администрация"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 4,
+        "fields": {
+            "stopword": "администрации"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 5,
+        "fields": {
+            "stopword": "МУНИЦИПАЛЬНОЕ"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 6,
+        "fields": {
+            "stopword": "МУНИЦИПАЛ"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 7,
+        "fields": {
+            "stopword": "Бюджетное"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 8,
+        "fields": {
+            "stopword": "КАЗЕННОЕ"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 9,
+        "fields": {
+            "stopword": "ФЕДЕРАЛЬНОЕ"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 10,
+        "fields": {
+            "stopword": "ОБЩЕСТВЕННОЙ ОРГАНИЗАЦИИ"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 11,
+        "fields": {
+            "stopword": "Общественная организация"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 12,
+        "fields": {
+            "stopword": "автономное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 13,
+        "fields": {
+            "stopword": "автономное учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 14,
+        "fields": {
+            "stopword": "бюджетное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 15,
+        "fields": {
+            "stopword": "бюджетное учреждение здравоохранения"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 16,
+        "fields": {
+            "stopword": "бюджетное учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 17,
+        "fields": {
+            "stopword": "государственное автономное образовательное учреждение высшего образования"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 18,
+        "fields": {
+            "stopword": "государственное автономное образовательное учреждение дополнительного профессионального образования"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 19,
+        "fields": {
+            "stopword": "государственное автономное профессиональное образовательное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 20,
+        "fields": {
+            "stopword": "государственное автономное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 21,
+        "fields": {
+            "stopword": "государственное автономное учреждение здравоохранения"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 22,
+        "fields": {
+            "stopword": "государственное автономное учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 23,
+        "fields": {
+            "stopword": "государственное бюджетное образовательное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 24,
+        "fields": {
+            "stopword": "государственное бюджетное профессиональное образовательное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 25,
+        "fields": {
+            "stopword": "государственное бюджетное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 26,
+        "fields": {
+            "stopword": "государственное бюджетное учреждение здравоохранения"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 27,
+        "fields": {
+            "stopword": "государственное бюджетное учреждение здравоохранения Севастополя"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 28,
+        "fields": {
+            "stopword": "государственное бюджетное учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 29,
+        "fields": {
+            "stopword": "государственное краевое бюджетное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 30,
+        "fields": {
+            "stopword": "государственное краевое бюджетное учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 31,
+        "fields": {
+            "stopword": "государственное казённое учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 32,
+        "fields": {
+            "stopword": "государственное казённое учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 33,
+        "fields": {
+            "stopword": "государственное областное бюджетное учреждение здравоохранения"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 34,
+        "fields": {
+            "stopword": "государственное образовательное бюджетное учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 35,
+        "fields": {
+            "stopword": "государственное образовательное учреждение высшего образования"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 36,
+        "fields": {
+            "stopword": "государственное образовательное учреждение высшего профессионального образования"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 37,
+        "fields": {
+            "stopword": "государственное профессиональное образовательное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 38,
+        "fields": {
+            "stopword": "государственное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 39,
+        "fields": {
+            "stopword": "государственное учреждение здравоохранения"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 40,
+        "fields": {
+            "stopword": "государственное учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 41,
+        "fields": {
+            "stopword": "государственное унитарное предприятие"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 42,
+        "fields": {
+            "stopword": "главное управление федеральной службы судебных приставов"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 43,
+        "fields": {
+            "stopword": "департамент градостроительства и земельных отношений"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 44,
+        "fields": {
+            "stopword": "департамент имущественных и земельных отношений"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 45,
+        "fields": {
+            "stopword": "департамент городского хозяйства"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 46,
+        "fields": {
+            "stopword": "департамент городского имущества"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 47,
+        "fields": {
+            "stopword": "ДЕПАРТАМЕНТ"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 48,
+        "fields": {
+            "stopword": "екатеринбургское муниципальное унитарное предприятие"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 49,
+        "fields": {
+            "stopword": "закрытое акционерное общество"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 50,
+        "fields": {
+            "stopword": "коммерческий банк"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 51,
+        "fields": {
+            "stopword": "краевое государственное автономное учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 52,
+        "fields": {
+            "stopword": "краевое государственное бюджетное научное учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 53,
+        "fields": {
+            "stopword": "краевое государственное бюджетное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 54,
+        "fields": {
+            "stopword": "краевое государственное казённое учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 55,
+        "fields": {
+            "stopword": "краевое государственное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 56,
+        "fields": {
+            "stopword": "казённое предприятие"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 57,
+        "fields": {
+            "stopword": "комитет по управлению имуществом"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 58,
+        "fields": {
+            "stopword": "комитет по управлению имуществом города"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 59,
+        "fields": {
+            "stopword": "муниципальное автономное общеобразовательное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 60,
+        "fields": {
+            "stopword": "муниципальное автономное общеобразовательное учреждение дошкольного образования"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 61,
+        "fields": {
+            "stopword": "муниципальное автономное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 62,
+        "fields": {
+            "stopword": "муниципальное автономное учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 63,
+        "fields": {
+            "stopword": "муниципальное бюджетное дошкольное образовательное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 64,
+        "fields": {
+            "stopword": "муниципальное бюджетное общеобразовательное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 65,
+        "fields": {
+            "stopword": "муниципальное бюджетное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 66,
+        "fields": {
+            "stopword": "муниципальное бюджетное учреждение дополнительного образования"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 67,
+        "fields": {
+            "stopword": "муниципальное бюджетное учреждение здравоохранения"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 68,
+        "fields": {
+            "stopword": "муниципальное бюджетное учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 69,
+        "fields": {
+            "stopword": "муниципальное бюджетное учреждение культуры дополнительного образования"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 70,
+        "fields": {
+            "stopword": "министерство внутренних дел"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 71,
+        "fields": {
+            "stopword": "муниципальное казённое образовательное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 72,
+        "fields": {
+            "stopword": "муниципальное казённое учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 73,
+        "fields": {
+            "stopword": "муниципальное казённое учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 74,
+        "fields": {
+            "stopword": "муниципальное казённое предприятие"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 75,
+        "fields": {
+            "stopword": "муниципальное общеобразовательное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 76,
+        "fields": {
+            "stopword": "муниципальное предприятие"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 77,
+        "fields": {
+            "stopword": "муниципальное учреждение"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 78,
+        "fields": {
+            "stopword": "муниципальное учреждение культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 79,
+        "fields": {
+            "stopword": "муниципальное унитарное предприятие"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 80,
+        "fields": {
+            "stopword": "МИНИСТЕРСТВО"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 81,
+        "fields": {
+            "stopword": "МИНОБОРОНЫ"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 82,
+        "fields": {
+            "stopword": "министерство обороны"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 83,
+        "fields": {
+            "stopword": "МИНОБР"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 84,
+        "fields": {
+            "stopword": "министерство образования"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 85,
+        "fields": {
+            "stopword": "МИНЗДРАВ"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 86,
+        "fields": {
+            "stopword": "министерство здравоохранения"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 87,
+        "fields": {
+            "stopword": "МИНКУЛЬТ"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 88,
+        "fields": {
+            "stopword": "министерство культуры"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 89,
+        "fields": {
+            "stopword": "МИНОБРНАУКИ"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 90,
+        "fields": {
+            "stopword": "министерство науки и высшего образования"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 91,
+        "fields": {
+            "stopword": "МИНПРИРОДЫ"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 92,
+        "fields": {
+            "stopword": "министерство природных ресурсов и экологии"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 93,
+        "fields": {
+            "stopword": "МИНПРОМТОРГ"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 94,
+        "fields": {
+            "stopword": "министерство промышленности и торговли"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 95,
+        "fields": {
+            "stopword": "МИНСЕЛЬХОЗ"
+        }
+    },
+    {
+        "model": "casebook.StopList",
+        "pk": 96,
+        "fields": {
+            "stopword": "министерство сельского хозяйства"
+        }
+    }
+]
