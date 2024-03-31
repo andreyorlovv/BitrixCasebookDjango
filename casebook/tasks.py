@@ -14,7 +14,9 @@ from casebook.models import Filter, Case, Tasks
 def get_tasks_from_db():
     tasks = Tasks.objects.all()
     for task in tasks:
-        scan.apply_async(args=[task.id])
+        if int((task.last_execution - datetime.datetime.now(tz=datetime.timezone.utc)).seconds % 3600 / 60.0) > task.iteration_interval:
+            scan.apply_async(args=[task.id])
+
 
 
 @shared_task
@@ -110,5 +112,10 @@ def scan(task_id):
                     )
             else:
                 pass
-    task.last_update = datetime.datetime.now().isoformat()
+    task.last_execution = datetime.datetime.now().isoformat()
     task.save()
+    scan.apply_async(
+        args=[task.id],
+        eta=(datetime.datetime.now() + datetime.timedelta(minutes=task.iteration_interval))
+    )
+
