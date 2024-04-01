@@ -16,7 +16,7 @@ def get_tasks_from_db():
     for task in tasks:
         if task.last_execution == None:
             scan.apply_async(args=[task.id])
-        if int((task.last_execution - datetime.datetime.now(tz=datetime.timezone.utc)).seconds % 3600 / 60.0) > task.iteration_interval:
+        elif int((task.last_execution - datetime.datetime.now(tz=datetime.timezone.utc)).seconds % 3600 / 60.0) > task.iteration_interval:
             scan.apply_async(args=[task.id])
 
 
