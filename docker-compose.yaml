@@ -33,7 +33,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - /home/docker/data:/var/lib/postgresql
+      - pgdata:/var/lib/postgresql
     environment:
       POSTGRES_DB: bitrix_casebook_prod
       POSTGRES_USER: postgres
