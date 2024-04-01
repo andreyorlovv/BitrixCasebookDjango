@@ -54,6 +54,7 @@ services:
       - djangonetwork
 volumes:
   static:
+  pgdata:
 
 networks:
   djangonetwork:
