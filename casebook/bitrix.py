@@ -125,7 +125,7 @@ class BitrixConnect:
             emails.append({'VALUE': str(email), 'VALUE_TYPE': 'WORK'})
         try:
             UF_CRM_1703235529 = 896 if len(case.respondent.inn) == 12 else 898
-            UF_CRM_1703234971 = 894 if rights else 893
+            UF_CRM_1703234971 = 893 if rights else 894
 
             # UF_CRM_1703235529 = "Исключительные права" if rights else "Неисключительные права"
             # UF_CRM_1703234971 = "Ответчик - ИП" if len(case.respondent.inn) == 12 else "Ответчик - ООО"
