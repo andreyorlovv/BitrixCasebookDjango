@@ -14,10 +14,10 @@ from casebook.models import Filter, Case, Tasks
 def get_tasks_from_db():
     tasks = Tasks.objects.all()
     for task in tasks:
-       # if task.last_execution is None:
- #           scan.apply_async(args=[task.id])
-      #  elif int((task.last_execution - datetime.datetime.now(tz=datetime.timezone.utc)).seconds % 3600 / 60.0) > task.iteration_interval:
-        scan.apply_async(args=[task.id])
+        if task.last_execution is None:
+            scan.apply_async(args=[task.id], retry=False, expires=600)
+        elif int((task.last_execution - datetime.datetime.now(tz=datetime.timezone.utc)).seconds % 3600 / 60.0) > task.iteration_interval:
+            scan.apply_async(args=[task.id], retry=False, expires=600)
 
 
 
@@ -61,32 +61,50 @@ def scan(task_id):
     if cases:
         processed_cases = []
         for case in cases:
-            print(case.number)
-            if not Case.objects.filter(case_id=str(case.number)).exists():
-                if 'индивидуальный предприниматель'.upper() in case.respondent.name.upper():
-                    case.contacts_info = get_contacts_via_export_base(
-                        ogrn=case.respondent.ogrn,
-                        key=settings.EXPORT_BASE_API_KEY)
-                else:
-                    case.contacts_info = get_contacts(inn=case.respondent.inn, ogrn=case.respondent.ogrn)
-                processed_cases.append(case)
+            try:
+                print(case.number)
+                if not Case.objects.filter(case_id=str(case.number)).exists():
+                    if 'индивидуальный предприниматель'.upper() in case.respondent.name.upper():
+                        case.contacts_info = get_contacts_via_export_base(
+                            ogrn=case.respondent.ogrn,
+                            key=settings.EXPORT_BASE_API_KEY)
+                    else:
+                        case.contacts_info = get_contacts(inn=case.respondent.inn, ogrn=case.respondent.ogrn)
+                    processed_cases.append(case)
+            except Exception as e:
+                Case.objects.create(
+                                process_date=datetime.datetime.now().date(),
+                                case_id=case.number,
+                                is_success=False,
+                                error_message=f'{e}'
+                            )
+                pass
         cases = processed_cases
         print('Processed Cases: ', str(len(cases)))
         with_contacts = []
         for case in cases:
-            if case.contacts_info.get('emails') == [] and case.contacts_info.get('numbers') == []:
-                case.contacts_info = get_contacts_via_export_base(
-                    ogrn=case.respondent.ogrn,
-                    key=settings.EXPORT_BASE_API_KEY)
-        #     if case.contacts_info.get('emails') == [] and case.contacts_info.get('numbers') == []:
-        #         Case.objects.create(
-        #             process_date=datetime.datetime.now().date(),
-        #             case_id=case.number,
-        #             is_success=False,
-        #             error_message=f'Не найдены контактные данные:  {case.contacts_info}'
-        #         )
-        #     else:
-        #         with_contacts.append(case)
+            try:
+                if case.contacts_info.get('emails') == [] and case.contacts_info.get('numbers') == []:
+                    case.contacts_info = get_contacts_via_export_base(
+                        ogrn=case.respondent.ogrn,
+                        key=settings.EXPORT_BASE_API_KEY)
+            #     if case.contacts_info.get('emails') == [] and case.contacts_info.get('numbers') == []:
+            #         Case.objects.create(
+            #             process_date=datetime.datetime.now().date(),
+            #             case_id=case.number,
+            #             is_success=False,
+            #             error_message=f'Не найдены контактные данные:  {case.contacts_info}'
+            #         )
+            #     else:
+            #         with_contacts.append(case)
+            except Exception as e:
+                Case.objects.create(
+                                process_date=datetime.datetime.now().date(),
+                                case_id=case.number,
+                                is_success=False,
+                                error_message=f'{e}'
+                            )
+                pass
         # cases = with_contacts
         print('Load to b24')
         for case in cases:
@@ -116,8 +134,10 @@ def scan(task_id):
                 pass
     task.last_execution = datetime.datetime.now().isoformat()
     task.save()
- #   scan.apply_async(
-    #    args=[task.id],
-     #   eta=(datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(minutes=task.iteration_interval))
-   # )
+    scan.apply_async(
+        args=[task.id],
+        eta=(datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(minutes=task.iteration_interval)),
+        retry=False,
+        expires=600
+    )
 
