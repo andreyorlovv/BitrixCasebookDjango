@@ -14,10 +14,10 @@ from casebook.models import Filter, Case, Tasks
 def get_tasks_from_db():
     tasks = Tasks.objects.all()
     for task in tasks:
-        if task.last_execution == None:
-            scan.apply_async(args=[task.id])
-        elif int((task.last_execution - datetime.datetime.now(tz=datetime.timezone.utc)).seconds % 3600 / 60.0) > task.iteration_interval:
-            scan.apply_async(args=[task.id])
+       # if task.last_execution is None:
+ #           scan.apply_async(args=[task.id])
+      #  elif int((task.last_execution - datetime.datetime.now(tz=datetime.timezone.utc)).seconds % 3600 / 60.0) > task.iteration_interval:
+        scan.apply_async(args=[task.id])
 
 
 
@@ -116,8 +116,8 @@ def scan(task_id):
                 pass
     task.last_execution = datetime.datetime.now().isoformat()
     task.save()
-    scan.apply_async(
-        args=[task.id],
-        eta=(datetime.datetime.now() + datetime.timedelta(minutes=task.iteration_interval))
-    )
+ #   scan.apply_async(
+    #    args=[task.id],
+     #   eta=(datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(minutes=task.iteration_interval))
+   # )
 
