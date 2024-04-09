@@ -1,12 +1,15 @@
-import datetime
+import json
 
 from django.contrib.admin import site
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from django.shortcuts import redirect
+from rest_framework.decorators import api_view
 
+import casebook.tasks
 from BitrixCasebook import settings
 from casebook.forms import SetupParseForm
-from casebook.models import Filter, Tasks
+from casebook.models import Filter, Tasks, BlackList
 from casebook.tasks import get_tasks_from_db
 
 
@@ -47,3 +50,30 @@ def process_delete_task(request):
     Tasks.objects.get(id=request.GET.get('id')).delete()
     return redirect('/')
 
+
+
+
+@api_view(['POST'])
+def add_to_blacklist(request):
+    if request.method == 'POST':
+        body_json = json.loads(request.body)
+        response_body = []
+        for item in body_json:
+            new_bl = BlackList(
+                value=item['value'],
+                type=item['type']
+            )
+            new_bl.save()
+            response_body.append(
+                {
+                    'id': new_bl.id,
+                    'value': new_bl.value,
+                    'type': new_bl.type
+                }
+            )
+        return HttpResponse(status=201, content=json.dumps(response_body))
+
+
+def update_filters(request):
+    casebook.tasks.update_filters.apply_async()
+    return redirect('/')

@@ -18,11 +18,14 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.template.backends import django
 from django.urls import path
+from django.views.decorators.csrf import csrf_exempt
 
 from casebook import views
 
 urlpatterns = [
+    path('add_to_black_list/', csrf_exempt(views.add_to_blacklist), name='add to BL'),
     path('delete_task/', views.process_delete_task, name='delete_task'),
+    path('update_filters/', views.update_filters, name='update_filters'),
     path('', views.custom_index, name='admin_custom_index'),
     path('', admin.site.urls),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),

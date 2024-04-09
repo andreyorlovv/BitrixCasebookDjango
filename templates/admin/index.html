@@ -10,7 +10,7 @@
                 <h5 class="m-0">Панель управления парсером</h5>
             </div>
             <div class="card-body">
-                <div style="padding-bottom: 1rem">
+                <div style="padding-bottom: 1rem" class="col">
                     <b>Осталось запросов к ExportBase - {{ remaining_export_base }}</b>
                 </div>
                 <form method="post">
@@ -18,7 +18,7 @@
                     {{ form_create.as_p }}
                     <input type="submit" value="Добавить в обработку">
                 </form>
-
+                <a href="/update_filters/" class="btn btn-success" style="margin-top: 1rem">Обновить фильтры</a>
         </div>
     </div>
     {% endif %}
