@@ -41,6 +41,11 @@ class Tasks(models.Model):
     last_execution = models.DateTimeField(blank=True, null=True)
 
 
-class ContactBlackList(models.Model):
+class BlackList(models.Model):
     value = models.CharField(max_length=255, verbose_name='Значение')
-    type = models.CharField(max_length=32, choices=['email', 'phone', 'organization'], verbose_name="Тип")
+    type = models.CharField(max_length=32, verbose_name="Тип",
+                            choices=[
+                                ('inn', 'Организация'),
+                                ('email', 'эл.почта'),
+                                ('phone', 'Номер телефона')
+                            ])
