@@ -2,7 +2,7 @@
 
 {% block content %}
 	{{ block.super }}
-
+    {% if remaining_export_base %}
     <div class="col-lg-9 col-12">
 
         <div class="card">
@@ -10,17 +10,9 @@
                 <h5 class="m-0">Панель управления парсером</h5>
             </div>
             <div class="card-body">
-{#                <form action="/" method="post">#}
-{##}
-{#                    {% csrf_token %}#}
-{#                    <div class="row">#}
-{#                        <div class="col"><h5>Выборка: </h5></div>#}
-{#                        <div class="col"><select name="Тест" id=""></select></div>#}
-{#                        <div class="col"><h5>Время между проверками в минутах: </h5></div>#}
-{#                        <div class="col"><input type="number"></div>#}
-{#                        <button type="submit">Отправить</button>#}
-{#                    </div>#}
-{#                </form>#}
+                <div style="padding-bottom: 1rem">
+                    <b>Осталось запросов к ExportBase - {{ remaining_export_base }}</b>
+                </div>
                 <form method="post">
                     {% csrf_token %}
                     {{ form_create.as_p }}
@@ -29,6 +21,7 @@
 
         </div>
     </div>
+    {% endif %}
     {% if res %}
         {{ res }}
     {% endif %}
@@ -55,5 +48,6 @@
             </div>
         </div>
     {% endif %}
+
     </div>
 {% endblock %}

@@ -217,3 +217,13 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
 
     return {'numbers': valid_numbers,
             'emails': email_list}
+
+
+class EmptyCompanyCredentialsException(Exception):
+    def __str__(self):
+        return 'Не предоставлены данные для запроса контактных данных'
+
+
+def complex_get_contacts(ogrn=None, inn=None):
+    if ogrn is None and inn is None:
+        raise EmptyCompanyCredentialsException()

@@ -145,9 +145,14 @@ class BitrixConnect:
                                           "EMAIL": emails,
                                           "UF_CRM_1703235529": UF_CRM_1703235529,
                                           "UF_CRM_1703234971": UF_CRM_1703234971,
-                                          "UF_CRM_1707995533": case.respondent.inn
+                                          "UF_CRM_1707995533": case.respondent.inn,
+                                          "ASSIGNED_BY_ID": 9
                                       }}
                                       )
-            return 'Success'
+            return result
         except Exception as e:
             print(e)
+
+    def delete_lead(self, lead_id):
+        self.bitrix.call('crm.lead.delete',
+                         {'id': f'{lead_id}'})
