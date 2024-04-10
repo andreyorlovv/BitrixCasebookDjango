@@ -76,7 +76,7 @@ def scan_enchanted(task_id):
     cases = casebook.get_cases(json.loads(filter_.value), task.days_expire)
     print('Cases get: ', str(len(cases)))
     if cases:
-        for case in cases[:2]:
+        for case in cases:
             print(case.number)
             try:
                 if not Case.objects.filter(case_id=str(case.number)).exists():
