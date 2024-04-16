@@ -91,13 +91,9 @@ def scan_enchanted(task_id):
                         ogrn=case.respondent.ogrn,
                         key=settings.EXPORT_BASE_API_KEY)
                 if case.contacts_info.get('emails') == [] and case.contacts_info.get('numbers') == []:
-                    Case.objects.create(
-                        process_date=datetime.datetime.now().date(),
-                        case_id=case.number,
-                        is_success=False,
-                        error_message=f'Не найдены контактные данные:  {case.contacts_info}'
-                    )
-                    raise NoContactDataException
+
+                    #raise NoContactDataException
+                    pass
                 if not Case.objects.filter(case_id=case.number).exists():
                     try:
                         if task.filter_id == '558875':
