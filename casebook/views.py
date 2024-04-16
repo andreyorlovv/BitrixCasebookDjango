@@ -51,8 +51,6 @@ def process_delete_task(request):
     return redirect('/')
 
 
-
-
 @api_view(['POST'])
 def add_to_blacklist(request):
     if request.method == 'POST':

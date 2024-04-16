@@ -42,10 +42,17 @@ class Tasks(models.Model):
 
 
 class BlackList(models.Model):
-    value = models.CharField(max_length=255, verbose_name='Значение')
+    value = models.CharField(max_length=255, verbose_name='Значение', unique=True)
     type = models.CharField(max_length=32, verbose_name="Тип",
                             choices=[
                                 ('inn', 'Организация'),
                                 ('email', 'эл.почта'),
                                 ('phone', 'Номер телефона')
                             ])
+
+    def __str__(self):
+        return f'{self.value} | {self.type}'
+
+    class Meta:
+        verbose_name = 'Черный список'
+        verbose_name_plural = 'Черный список'

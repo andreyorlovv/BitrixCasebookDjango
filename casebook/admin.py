@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 import casebook.tasks
-from casebook.models import Case, StopList
+from casebook.models import Case, StopList, BlackList
 
 
 # Register your models here.
@@ -31,6 +31,11 @@ class StopListAdmin(admin.ModelAdmin):
     ordering = ('id',)
 
 
+class BlackListAdmin(admin.ModelAdmin):
+    list_display = ('value', 'type')
+
+
 admin.site.register(Case, CaseAdmin)
 admin.site.register(StopList, StopListAdmin)
+admin.site.register(BlackList, BlackListAdmin)
 admin.site.site_header = 'Парсер Casebook'
