@@ -81,17 +81,17 @@ def scan_enchanted(task_id):
             try:
                 if not Case.objects.filter(case_id=str(case.number)).exists():
                     if 'индивидуальный предприниматель'.upper() in case.respondent.name.upper():
-                        case.contacts_info = get_contacts_via_export_base(
-                            ogrn=case.respondent.ogrn,
-                            key=settings.EXPORT_BASE_API_KEY)
+                        case.contacts_info = {'emails': [], 'numbers': []}
+                        # case.contacts_info = get_contacts_via_export_base(
+                        #     ogrn=case.respondent.ogrn,
+                        #     key=settings.EXPORT_BASE_API_KEY)
                     else:
                         case.contacts_info = get_contacts(inn=case.respondent.inn, ogrn=case.respondent.ogrn)
+                # if case.contacts_info.get('emails') == [] and case.contacts_info.get('numbers') == []:
+                #     case.contacts_info = get_contacts_via_export_base(
+                #         ogrn=case.respondent.ogrn,
+                #         key=settings.EXPORT_BASE_API_KEY)
                 if case.contacts_info.get('emails') == [] and case.contacts_info.get('numbers') == []:
-                    case.contacts_info = get_contacts_via_export_base(
-                        ogrn=case.respondent.ogrn,
-                        key=settings.EXPORT_BASE_API_KEY)
-                if case.contacts_info.get('emails') == [] and case.contacts_info.get('numbers') == []:
-
                     #raise NoContactDataException
                     pass
                 if not Case.objects.filter(case_id=case.number).exists():
