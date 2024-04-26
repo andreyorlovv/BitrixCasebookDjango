@@ -129,7 +129,8 @@ class BitrixConnect:
 
             # UF_CRM_1703235529 = "Исключительные права" if rights else "Неисключительные права"
             # UF_CRM_1703234971 = "Ответчик - ИП" if len(case.respondent.inn) == 12 else "Ответчик - ООО"
-
+            from casebook.contacts import get_name
+            full_name = get_name(case.respondent.ogrn)
             result = self.bitrix.call('crm.lead.add',
                                       {"fields": {
                                           "TITLE": case.number,
@@ -146,7 +147,10 @@ class BitrixConnect:
                                           "UF_CRM_1703235529": UF_CRM_1703235529,
                                           "UF_CRM_1703234971": UF_CRM_1703234971,
                                           "UF_CRM_1707995533": case.respondent.inn,
-                                          "ASSIGNED_BY_ID": 9
+                                          "ASSIGNED_BY_ID": 9,
+                                          "LAST_NAME": full_name[0],
+                                          "NAME": full_name[1],
+                                          "SECOND_NAME": full_name[2],
                                       }}
                                       )
             return result

@@ -104,6 +104,20 @@ def process_two_email(ogrn):
         pass
 
 
+def get_name(inn: str):
+    inn = str(inn)
+    url = f"https://checko.ru/company/{inn}"
+    headers = {
+        'User-Agent': 'Mozila/5.0(Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+    try:
+        response = requests.get(url, headers=headers)
+        soup2 = BeautifulSoup(response.text, "html.parser")
+        name = soup2.find('meta', {"property": "og:title"})
+        return str(name).split(' - ')[1].replace('Директор ', '').split(' ')
+    except Exception as e:
+        pass
+
+
 def process_three(ogrn):
     url3 = "https://companium.ru/id/" + ogrn
     headers = {
@@ -172,6 +186,8 @@ def get_contacts(inn, ogrn):
 
 
 def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
+    from casebook.models import BlackList
+
     number_list = []
     email_list = []
 
@@ -215,8 +231,27 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         number = number.replace('+7', '7')
         valid_numbers.append(number)
 
-    return {'numbers': valid_numbers,
-            'emails': email_list}
+    result_numbers = []
+
+    black_list_number = BlackList.objects.filter(type='phone')
+
+    for number in valid_numbers:
+        if number in black_list_number:
+            pass
+        else:
+            result_numbers.append(number)
+
+    result_email = []
+    black_list_email = BlackList.objects.filter(type='email')
+
+    for email in email_list:
+        if email in black_list_email:
+            pass
+        else:
+            result_email.append(email)
+
+    return {'numbers': result_numbers,
+            'emails': result_email}
 
 
 class EmptyCompanyCredentialsException(Exception):
@@ -227,3 +262,8 @@ class EmptyCompanyCredentialsException(Exception):
 def complex_get_contacts(ogrn=None, inn=None):
     if ogrn is None and inn is None:
         raise EmptyCompanyCredentialsException()
+
+#
+# if __name__ == '__main__':
+#     print(get_name("1167746610745"))
+#

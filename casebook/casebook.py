@@ -6,7 +6,7 @@ import json
 import urllib3
 
 from casebook import models
-from casebook.models import StopList
+from casebook.models import StopList, BlackList
 from casebook.models import Case as CaseModel
 
 
@@ -33,6 +33,10 @@ class Case:
     _type: dict
     contacts_info: dict = dataclasses.field(default_factory=dict)
     error: str = None
+
+
+class BlackListException(Exception):
+    pass
 
 
 class Casebook:
@@ -184,9 +188,13 @@ class Casebook:
             else:
                 pass
         cases = cases_to_process
+        company_black_list = BlackList.objects.filter(type='inn')
         for case in cases:
             try:
                 for side in case['sides']:
+                    if side['nSideTypeEnum'] == 'Plaintiff':
+                        if side['inn'] in company_black_list:
+                            raise BlackListException(f"{side['inn']} в черном списке")
                     if side['nSideTypeEnum'] == 'Respondent' or side['nSideTypeEnum'] == 'OtherRespondent':
                         stoplist = StopList.objects.all()
                         for stopword in stoplist:
@@ -232,6 +240,13 @@ class Casebook:
                     case_id=case['caseNumber'],
                     is_success=False,
                     error_message=f'Ошибка: {case}'
+                )
+            except BlackListException as e:
+                models.Case.objects.create(
+                    process_date=datetime.datetime.now().date(),
+                    case_id=case['caseNumber'],
+                    is_success=False,
+                    error_message=f'Ошибка: {e}'
                 )
             except GetOutOfLoop:
                 pass
