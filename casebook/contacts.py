@@ -5,6 +5,7 @@ from typing import Tuple, List, Any
 import requests
 import re
 from bs4 import BeautifulSoup
+from lxml import etree
 
 
 def find_phone(text):
@@ -65,7 +66,7 @@ def process_two_phone(ogrn):
         if main_element:
             links = main_element.find_all("a", class_="black-link no-underline")
             if links:
-                for link in links[:10]:
+                for link in links:
                     print(link)
                     links_list.append(link["href"][5:])
             return links_list
@@ -79,7 +80,7 @@ def process_two_phone(ogrn):
 def process_two_email(ogrn):
     links_list = list()
     email_regex = re.compile(
-        r"""^(?!\.)(?![_])(?!.*@.*@)(?!.*\.\.)(?!.*@)(?!.*\.)[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.a-zA-Z0-9\:\?[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$""",
+        r"""^\S+@\S+\.\S+$""",
         re.IGNORECASE)
     url2 = "https://checko.ru/company/" + ogrn + "?extra=contacts"
     headers = {
@@ -91,7 +92,7 @@ def process_two_email(ogrn):
         if main_element:
             links = main_element.find_all("a", class_="link", rel="nofollow")
             if links:
-                for link in links[1:10]:
+                for link in links:
                     email = link["href"][7:].replace('\xa0', '')
                     if email_regex.match(email):
                         links_list.append(email)
@@ -112,8 +113,8 @@ def get_name(inn: str):
     try:
         response = requests.get(url, headers=headers)
         soup2 = BeautifulSoup(response.text, "html.parser")
-        name = soup2.find('meta', {"property": "og:title"})
-        return str(name).split(' - ')[1].replace('Директор ', '').split(' ')
+        dom = etree.HTML(str(soup2))
+        return dom.xpath("//*[@id=\"basic\"]/div[3]/div[2]/div[3]/div/div[2]/a")[0].text
     except Exception as e:
         pass
 
@@ -161,6 +162,7 @@ def get_contacts(inn, ogrn):
     try:
         number_list.extend(process_two_phone(ogrn))
         email_list.extend(process_two_email(ogrn))
+        print(email_list)
     except TypeError:
         pass
     try:
@@ -178,8 +180,8 @@ def get_contacts(inn, ogrn):
         number = number.replace('+7', '7')
         valid_numbers.append(number)
 
-    # number_list = list(set(number_list))
-    # email_list = list(set(email_list))
+    number_list = list(set(number_list))
+    email_list = list(set(email_list))
 
     return {'numbers': valid_numbers,
             'emails': email_list}
@@ -243,7 +245,6 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
 
     result_email = []
     black_list_email = BlackList.objects.filter(type='email')
-
     for email in email_list:
         if email in black_list_email:
             pass
@@ -266,4 +267,8 @@ def complex_get_contacts(ogrn=None, inn=None):
 #
 # if __name__ == '__main__':
 #     print(get_name("1167746610745"))
-#
+#     print(get_name("1105250003044"))
+#     print(get_name("1027700035769"))
+#     print(get_name("1105476078575"))
+#     print('')
+#     print(get_contacts('6146004404', '1026102081686'))
