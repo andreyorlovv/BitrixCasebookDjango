@@ -105,7 +105,7 @@ def process_two_email(ogrn):
         pass
 
 
-def get_name(inn: str):
+def get_name(inn: str) -> str:
     inn = str(inn)
     url = f"https://checko.ru/company/{inn}"
     headers = {
@@ -264,11 +264,10 @@ def complex_get_contacts(ogrn=None, inn=None):
     if ogrn is None and inn is None:
         raise EmptyCompanyCredentialsException()
 
-#
+
 # if __name__ == '__main__':
 #     print(get_name("1167746610745"))
 #     print(get_name("1105250003044"))
 #     print(get_name("1027700035769"))
-#     print(get_name("1105476078575"))
-#     print('')
-#     print(get_contacts('6146004404', '1026102081686'))
+#     print(get_name("1180280001989"))
+#     print(type(get_name("1105476078575")))
