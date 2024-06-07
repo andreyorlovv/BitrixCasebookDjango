@@ -124,52 +124,46 @@ class BitrixConnect:
             phones.append({'VALUE': str(phone), 'VALUE_TYPE': 'WORK'})
         for email in case.contacts_info['emails']:
             emails.append({'VALUE': str(email), 'VALUE_TYPE': 'WORK'})
-        try:
-            UF_CRM_1703235529 = 896 if len(case.respondent.inn) == 12 else 898
-            UF_CRM_1703234971 = 893 if rights == True else 894
+        UF_CRM_1703235529 = 896 if len(case.respondent.inn) == 12 else 898
+        UF_CRM_1703234971 = 893 if rights == True else 894
 
-            # UF_CRM_1703235529 = "Исключительные права" if rights else "Неисключительные права"
-            # UF_CRM_1703234971 = "Ответчик - ИП" if len(case.respondent.inn) == 12 else "Ответчик - ООО"
-            from casebook.contacts import get_name
-            name = get_name(case.respondent.ogrn)
+        # UF_CRM_1703235529 = "Исключительные права" if rights else "Неисключительные права"
+        # UF_CRM_1703234971 = "Ответчик - ИП" if len(case.respondent.inn) == 12 else "Ответчик - ООО"
+        from casebook.contacts import get_name
+        name = get_name(case.respondent.ogrn)
 
+        if type(name) != NoneType:
             if len(name) < 4:
                 print("Не удалось найти ФИО")
                 full_name = ['', '', '']
             else:
                 full_name = name.split(' ')
+        else:
+            full_name = ['', '', '']
+        items = {"fields": {
+            "TITLE": case.number,
+            "UF_CRM_1703238484214": case.url,
+            "STATUS_ID": "UC_0LLO5N",
+            "COMPANY_TITLE": case.respondent.name,
+            "UF_CRM_1702365701": case.number,
+            "UF_CRM_1702366987": courts.get(case.court),
+            "UF_CRM_1702365740": case.reg_date.isoformat(),
+            "UF_CRM_1702365922": f'{case.plaintiff.name}',
+            "UF_CRM_1702365965": case.sum_,
+            "PHONE": phones,
+            "EMAIL": emails,
+            "UF_CRM_1703235529": UF_CRM_1703235529,
+            "UF_CRM_1703234971": UF_CRM_1703234971,
+            "UF_CRM_1707995533": case.respondent.inn,
+            "ASSIGNED_BY_ID": 9,
+            "LAST_NAME": full_name[0],
+            "NAME": full_name[1],
+            "SECOND_NAME": full_name[2],
+        }}
 
-            items = {"fields": {
-                "TITLE": case.number,
-                "UF_CRM_1703238484214": case.url,
-                "STATUS_ID": "UC_0LLO5N",
-                "COMPANY_TITLE": case.respondent.name,
-                "UF_CRM_1702365701": case.number,
-                "UF_CRM_1702366987": courts.get(case.court),
-                "UF_CRM_1702365740": case.reg_date.isoformat(),
-                "UF_CRM_1702365922": f'{case.plaintiff.name}',
-                "UF_CRM_1702365965": case.sum_,
-                "PHONE": phones,
-                "EMAIL": emails,
-                "UF_CRM_1703235529": UF_CRM_1703235529,
-                "UF_CRM_1703234971": UF_CRM_1703234971,
-                "UF_CRM_1707995533": case.respondent.inn,
-                "ASSIGNED_BY_ID": 9,
-                "LAST_NAME": full_name[0],
-                "NAME": full_name[1],
-                "SECOND_NAME": full_name[2],
-            }}
-
-            result = self.bitrix.call('crm.lead.add',
-                                      items=items)
-
-            if type(result) is NoneType:
-                raise Exception(items)
-
-            return result
-        except Exception as e:
-            print(e)
-            raise Exception(e.__str__())
+        result = self.bitrix.call('crm.lead.add',
+                                  items=items)
+        return result
 
     def delete_lead(self, lead_id):
         self.bitrix.call('crm.lead.delete',

@@ -180,7 +180,7 @@ def get_contacts(inn, ogrn):
         number = number.replace('+7', '7')
         valid_numbers.append(number)
 
-    number_list = list(set(number_list))
+    valid_numbers = list(set(valid_numbers))
     email_list = list(set(email_list))
 
     return {'numbers': valid_numbers,
@@ -263,7 +263,6 @@ class EmptyCompanyCredentialsException(Exception):
 def complex_get_contacts(ogrn=None, inn=None):
     if ogrn is None and inn is None:
         raise EmptyCompanyCredentialsException()
-
 
 # if __name__ == '__main__':
 #     print(get_name("1167746610745"))
