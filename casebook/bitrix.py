@@ -132,34 +132,68 @@ class BitrixConnect:
         from casebook.contacts import get_name
         name = get_name(case.respondent.ogrn)
 
+        full_name = ['', '', '']
+
         if type(name) != NoneType:
             if len(name) < 4:
                 print("Не удалось найти ФИО")
-                full_name = ['', '', '']
+                items = {"fields": {
+                    "TITLE": case.number,
+                    "UF_CRM_1703238484214": case.url,
+                    "STATUS_ID": "UC_0LLO5N",
+                    "COMPANY_TITLE": case.respondent.name,
+                    "UF_CRM_1702365701": case.number,
+                    "UF_CRM_1702366987": courts.get(case.court),
+                    "UF_CRM_1702365740": case.reg_date.isoformat(),
+                    "UF_CRM_1702365922": f'{case.plaintiff.name}',
+                    "UF_CRM_1702365965": case.sum_,
+                    "PHONE": phones,
+                    "EMAIL": emails,
+                    "UF_CRM_1703235529": UF_CRM_1703235529,
+                    "UF_CRM_1703234971": UF_CRM_1703234971,
+                    "UF_CRM_1707995533": case.respondent.inn,
+                    "ASSIGNED_BY_ID": 9
+                }}
             else:
                 full_name = name.split(' ')
+                items = {"fields": {
+                    "TITLE": case.number,
+                    "UF_CRM_1703238484214": case.url,
+                    "STATUS_ID": "UC_0LLO5N",
+                    "COMPANY_TITLE": case.respondent.name,
+                    "UF_CRM_1702365701": case.number,
+                    "UF_CRM_1702366987": courts.get(case.court),
+                    "UF_CRM_1702365740": case.reg_date.isoformat(),
+                    "UF_CRM_1702365922": f'{case.plaintiff.name}',
+                    "UF_CRM_1702365965": case.sum_,
+                    "PHONE": phones,
+                    "EMAIL": emails,
+                    "UF_CRM_1703235529": UF_CRM_1703235529,
+                    "UF_CRM_1703234971": UF_CRM_1703234971,
+                    "UF_CRM_1707995533": case.respondent.inn,
+                    "ASSIGNED_BY_ID": 9,
+                    "LAST_NAME": full_name[0],
+                    "NAME": full_name[1],
+                    "SECOND_NAME": full_name[2],
+                }}
         else:
-            full_name = ['', '', '']
-        items = {"fields": {
-            "TITLE": case.number,
-            "UF_CRM_1703238484214": case.url,
-            "STATUS_ID": "UC_0LLO5N",
-            "COMPANY_TITLE": case.respondent.name,
-            "UF_CRM_1702365701": case.number,
-            "UF_CRM_1702366987": courts.get(case.court),
-            "UF_CRM_1702365740": case.reg_date.isoformat(),
-            "UF_CRM_1702365922": f'{case.plaintiff.name}',
-            "UF_CRM_1702365965": case.sum_,
-            "PHONE": phones,
-            "EMAIL": emails,
-            "UF_CRM_1703235529": UF_CRM_1703235529,
-            "UF_CRM_1703234971": UF_CRM_1703234971,
-            "UF_CRM_1707995533": case.respondent.inn,
-            "ASSIGNED_BY_ID": 9,
-            "LAST_NAME": full_name[0],
-            "NAME": full_name[1],
-            "SECOND_NAME": full_name[2],
-        }}
+            items = {"fields": {
+                "TITLE": case.number,
+                "UF_CRM_1703238484214": case.url,
+                "STATUS_ID": "UC_0LLO5N",
+                "COMPANY_TITLE": case.respondent.name,
+                "UF_CRM_1702365701": case.number,
+                "UF_CRM_1702366987": courts.get(case.court),
+                "UF_CRM_1702365740": case.reg_date.isoformat(),
+                "UF_CRM_1702365922": f'{case.plaintiff.name}',
+                "UF_CRM_1702365965": case.sum_,
+                "PHONE": phones,
+                "EMAIL": emails,
+                "UF_CRM_1703235529": UF_CRM_1703235529,
+                "UF_CRM_1703234971": UF_CRM_1703234971,
+                "UF_CRM_1707995533": case.respondent.inn,
+                "ASSIGNED_BY_ID": 9
+            }}
 
         result = self.bitrix.call('crm.lead.add',
                                   items=items)
