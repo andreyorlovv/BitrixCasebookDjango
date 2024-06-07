@@ -80,9 +80,11 @@ def scan_enchanted(task_id):
             print(case.number)
             try:
                 if not Case.objects.filter(case_id=str(case.number)).exists():
-                    if 'индивидуальный предприниматель'.upper() in case.respondent.name.upper():
-                        case.contacts_info = {'emails': [], 'numbers': []}
-                        case.contacts_info = get_contacts(inn=case.respondent.inn, ogrn=case.respondent.ogrn)
+                    # if 'индивидуальный предприниматель'.upper() in case.respondent.name.upper():
+                    #     case.contacts_info = {'emails': [], 'numbers': []}
+                    #     case.contacts_info = get_contacts(inn=case.respondent.inn, ogrn=case.respondent.ogrn)
+                    case.contacts_info = {'emails': [], 'numbers': []}
+                    case.contacts_info = get_contacts(inn=case.respondent.inn, ogrn=case.respondent.ogrn)
                 if case.contacts_info.get('emails') == [] and case.contacts_info.get('numbers') == []:
                     #raise NoContactDataException
                     pass
