@@ -80,14 +80,21 @@ def scan_enchanted(task_id):
             print(case.number)
             try:
                 if not Case.objects.filter(case_id=str(case.number)).exists():
-                    # if 'индивидуальный предприниматель'.upper() in case.respondent.name.upper():
-                    #     case.contacts_info = {'emails': [], 'numbers': []}
-                    #     case.contacts_info = get_contacts(inn=case.respondent.inn, ogrn=case.respondent.ogrn)
-                    case.contacts_info = {'emails': [], 'numbers': []}
-                    case.contacts_info = get_contacts(inn=case.respondent.inn, ogrn=case.respondent.ogrn)
+                    if 'индивидуальный предприниматель'.upper() in case.respondent.name.upper():
+                        try:
+                            case.contacts_info = {'emails': [], 'numbers': []}
+                            case.contacts_info = get_contacts_via_export_base(ogrn=case.respondent.ogrn,
+                                                                              key=settings.EXPORT_BASE_API_KEY)
+                        except Exception as e:
+                            case.contacts_info = {'emails': [], 'numbers': []}
+                            case.contacts_info = get_contacts(inn=case.respondent.inn, ogrn=case.respondent.ogrn)
+                    else:
+                        case.contacts_info = {'emails': [], 'numbers': []}
+                        case.contacts_info = get_contacts(inn=case.respondent.inn, ogrn=case.respondent.ogrn)
                 if case.contacts_info.get('emails') == [] and case.contacts_info.get('numbers') == []:
-                    #raise NoContactDataException
-                    pass
+                    case.contacts_info = {'emails': [], 'numbers': []}
+                    case.contacts_info = get_contacts_via_export_base(ogrn=case.respondent.ogrn,
+                                                                      key=settings.EXPORT_BASE_API_KEY)
                 if not Case.objects.filter(case_id=case.number).exists():
                     try:
                         if task.filter_id == '558875':
@@ -118,7 +125,7 @@ def scan_enchanted(task_id):
                     is_success=False,
                     error_message=f'{e}'
                 )
-    task.last_execution = datetime.datetime.now().isoformat()
+    task.last_execution = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
     task.save()
     scan_enchanted.apply_async(
         args=[task.id],

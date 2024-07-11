@@ -21,3 +21,6 @@ class SetupParseForm(forms.Form):
     time_delta = forms.IntegerField(label='Давность кейсов в днях', min_value=2, initial=10)
 
 
+class ExcelReportForm(forms.Form):
+    start_date = forms.DateField(label='с')
+    end_date = forms.DateField(label='по')

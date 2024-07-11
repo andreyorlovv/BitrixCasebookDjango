@@ -1,6 +1,10 @@
+import datetime
+import io
 import json
+import xlsxwriter
 
 from django.contrib.admin import site
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -9,7 +13,7 @@ from rest_framework.decorators import api_view
 import casebook.tasks
 from BitrixCasebook import settings
 from casebook.forms import SetupParseForm
-from casebook.models import Filter, Tasks, BlackList
+from casebook.models import Filter, Tasks, BlackList, Case
 from casebook.tasks import get_tasks_from_db
 
 
@@ -49,6 +53,44 @@ def custom_index(request):
 def process_delete_task(request):
     Tasks.objects.get(id=request.GET.get('id')).delete()
     return redirect('/')
+
+
+@login_required(login_url='/login/')
+@staff_member_required
+def download_xlsx_view(request):
+    queryset = Case.objects.all()
+    if request.GET.get('from') or request.GET.get('to'):
+        queryset = queryset.filter(process_date__range=[request.GET.get('from'), request.GET.get('to')])
+    output = io.BytesIO()
+
+    workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+    worksheet = workbook.add_worksheet()
+    row = 0
+    col = 0
+    worksheet.write(row, col, 'id кейса')
+    worksheet.write(row, col + 1, 'Номер дела в арбитре')
+    worksheet.write(row, col + 2, 'Дата обработки')
+    worksheet.write(row, col + 3, 'Успешно обработано (?)')
+    worksheet.write(row, col + 4, 'Ошибка, если есть')
+    row = 1
+    for item in queryset:
+        worksheet.write(row, col, item.id)
+        worksheet.write(row, col + 1, item.case_id)
+        worksheet.write(row, col + 2, item.process_date.strftime('%m/%d/%Y'))
+        worksheet.write(row, col + 3, 'Да' if item.is_success else 'Нет')
+        worksheet.write(row, col + 4, item.error_message)
+        row += 1
+    workbook.close()
+
+    output.seek(0)
+
+    print(workbook.filename)
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            content=output.read())
+    response['Content-Disposition'] = f"attachment; filename={datetime.datetime.now().strftime('%Y%m%d-%H%M')}.xlsx"
+
+    return response
 
 
 @api_view(['POST'])

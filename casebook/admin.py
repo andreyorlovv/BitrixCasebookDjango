@@ -1,16 +1,25 @@
 from django.contrib import admin
+from django.http import HttpResponse
 
 import casebook.tasks
+from casebook.forms import ExcelReportForm
 from casebook.models import Case, StopList, BlackList
 
 
 # Register your models here.
 class CaseAdmin(admin.ModelAdmin):
     change_form_template = 'admin/case_view.html'
+    change_list_template = 'admin/casebook/Case/change_list.html'
 
     search_fields = ['case_id']
     list_display = ('process_date', 'case_id', 'is_success', 'error_message')
     readonly_fields = ['bitrix_lead_id', ]
+
+    def changelist_view(self, request, *args, **kwargs):
+
+        return super().changelist_view(
+            request, *args, **kwargs
+        )
 
     def delete_view(self, request, object_id, extra_context=None):
         if request.method == 'POST':

@@ -7,6 +7,8 @@ import re
 from bs4 import BeautifulSoup
 from lxml import etree
 
+from casebook.models import BlackList
+
 
 def find_phone(text):
     lines = text.split('\n')
@@ -180,11 +182,29 @@ def get_contacts(inn, ogrn):
         number = number.replace('+7', '7')
         valid_numbers.append(number)
 
-    valid_numbers = list(set(valid_numbers))
-    email_list = list(set(email_list))
+    black_list_number = BlackList.objects.filter(type='phone')
 
-    return {'numbers': valid_numbers,
-            'emails': email_list}
+    result_numbers = []
+
+    for number in valid_numbers:
+        if number in black_list_number:
+            pass
+        else:
+            result_numbers.append(number)
+
+    result_email = []
+    black_list_email = BlackList.objects.filter(type='email')
+    for email in email_list:
+        if email in black_list_email:
+            pass
+        else:
+            result_email.append(email)
+
+    result_numbers = list(set(result_numbers))
+    result_email = list(set(result_email))
+
+    return {'numbers': result_numbers,
+            'emails': result_email}
 
 
 def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
