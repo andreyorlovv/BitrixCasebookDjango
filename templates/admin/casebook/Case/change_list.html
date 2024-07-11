@@ -1,0 +1,23 @@
+{% extends 'admin/change_list.html' %}
+
+{% block object-tools %}
+{#    {% csrf_token %}#}
+{#    {{ excel_form }}#}
+{#    <input type="submit" value="тест">#}
+
+    <script type="text/javascript">
+        function getExcel() {
+            var from = document.getElementById("from").value;
+            var to = document.getElementById("to").value;
+            window.open("/download_xlsx/" + "?from=" + from + "&to=" + to)
+        }
+    </script>
+    <input type="date" id="from" style="margin-right: 6px">
+    <input type="date" id="to" style="margin-right: 6px">
+    <button class="btn btn-success float-right" type="button" onclick="getExcel()" > 💾 Скачать отчет Excel </button>
+    {{ block.super }}
+{% endblock %}
+
+{% block content %}
+	{{ block.super }}
+{% endblock %}
