@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-#i@-roa(uj21p-l#gj(u03f@a9(zieciq)i%t_800zy9bm--)%
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['http://localhost', 'http://109.167.158.83:81', 'http://localhost:81', 'http://*']
+CSRF_TRUSTED_ORIGINS = ['http://localhost', 'http://185.101.27.108:81', 'http://localhost:81', 'http://*']
 
 BITRIX_CALLBACK = 'https://crm.yk-cfo.ru/rest/1690/eruxj0nx7ria5j0q/'
 
