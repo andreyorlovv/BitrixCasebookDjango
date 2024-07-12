@@ -3,6 +3,7 @@ version: '3'
 services:
   web:
     build: .
+    restart: always
     command: bash -c "
       python manage.py migrate
       && python manage.py loaddata stoplist.json
@@ -22,6 +23,7 @@ services:
       - djangonetwork
 
   redis:
+    restart: always
     image: redis:6.2.14-alpine
 #    ports:
 #      - "6379:6379"
@@ -29,6 +31,7 @@ services:
       - djangonetwork
 #
   db:
+    restart: always
     image: bitnami/postgresql:latest
     ports:
       - "5432:5432"
