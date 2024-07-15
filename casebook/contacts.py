@@ -251,6 +251,9 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
 
     for number in number_list:
         number = number.replace('+7', '7')
+        number = number.replace(' ', '')
+        number = number.replace('(', '')
+        number = number.replace(')', '')
         valid_numbers.append(number)
 
     result_numbers = []
