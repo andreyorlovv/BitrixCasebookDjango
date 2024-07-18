@@ -229,6 +229,8 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         data = result_data['companies_data'][0]
     except IndexError as e:
         return get_contacts(ogrn=ogrn, inn=inn)
+    except Exception as e:
+        return get_contacts(ogrn=ogrn, inn=inn)
     number_list += data['stationary_phone'].split(', +')
     number_list += data['mobile_phone'].split(', +')
 
