@@ -184,7 +184,7 @@ def get_contacts(inn, ogrn):
         number = number.replace('(', '')
         number = number.replace(')', '')
         number = number.replace('-', '')
-        valid_numbers.append(number) if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
+        valid_numbers.append(number) #if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
 
     black_list_number = BlackList.objects.filter(type='phone')
 
@@ -261,7 +261,7 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         number = number.replace('(', '')
         number = number.replace(')', '')
         number = number.replace('-', '')
-        valid_numbers.append(number) if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
+        valid_numbers.append(number) #if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
 
     result_numbers = []
 
