@@ -108,146 +108,152 @@ class Casebook:
             for filter_ in serialized['result']]
 
     def get_cases(self, filter_source, timedelta):
-        import ast
-        serialized = None
-        i = 0
-        filter_ = filter_source['filter']
-        for filter__ in filter_['items']:
-            try:
-                if filter__['filter']['type'] == 'CaseStartDate':
-                    filter_['items'][i]['filter']['value'] = {
-                        'from': (datetime.datetime.now().date() - datetime.timedelta(days=timedelta)).strftime(
-                            '%Y-%m-%d'),
-                        'to': datetime.datetime.now().date().strftime('%Y-%m-%d')
-                    }
-                else:
+        try:
+            import ast
+            serialized = None
+            i = 0
+            filter_ = filter_source['filter']
+            for filter__ in filter_['items']:
+                try:
+                    if filter__['filter']['type'] == 'CaseStartDate':
+                        filter_['items'][i]['filter']['value'] = {
+                            'from': (datetime.datetime.now().date() - datetime.timedelta(days=timedelta)).strftime(
+                                '%Y-%m-%d'),
+                            'to': datetime.datetime.now().date().strftime('%Y-%m-%d')
+                        }
+                    else:
+                        i += 1
+                except KeyError:
                     i += 1
-            except KeyError:
-                i += 1
-        query = filter_
-        query['page'] = 1
-        query['count'] = 30
-        query['isNeedStat'] = True
-        query = str(query)
-        response = self.http_client.request('POST', 'https://casebook.ru/ms/Search/Cases/Search',
-                                            body=query.replace('None', 'null')
-                                            .replace("'", '"')
-                                            .replace('True', 'true')
-                                            .replace('False', 'false'),
-                                            headers=self.headers)
-        serialized = json.loads(response.data)
-        pages = serialized['result']['pagesCount']
-        cases = []
-        result = []
-        for page in range(1, pages + 1):
-            serialized_page = None
-            curr_query = filter_
-            curr_query['page'] = page
-            curr_query['count'] = 30
-            curr_query['isNeedStat'] = True
-            curr_query = str(curr_query)
+            query = filter_
+            query['page'] = 1
+            query['count'] = 30
+            query['isNeedStat'] = True
+            query = str(query)
             response = self.http_client.request('POST', 'https://casebook.ru/ms/Search/Cases/Search',
-                                                body=curr_query.replace('None', 'null')
+                                                body=query.replace('None', 'null')
                                                 .replace("'", '"')
                                                 .replace('True', 'true')
                                                 .replace('False', 'false'),
                                                 headers=self.headers)
-            serialized_page = json.loads(response.data)
-            for case in serialized_page['result']['items']:
-                cases.append(case)
-        for case in cases:
-            if len(case['sides']) > 2:
-                _respondent = 0
-                _plaintiff = 0
-                _other = 0
-                for side in case['sides']:
-                    if side['nSideTypeEnum'] == 'Other':
-                        _other += 1
-                    elif side['nSideTypeEnum'] == 'Plaintiff':
-                        _plaintiff += 1
-                    elif side['nSideTypeEnum'] == 'Respondent':
-                        _respondent += 1
-                    else:
-                        _other += 1
-                try:
-                    if _respondent > 1:
-                        import casebook
-                        models.Case.objects.create(
-                            process_date=datetime.datetime.now().date(),
-                            case_id=case.number,
-                            is_success=False,
-                            error_message='больше одного ответчика, отфильтровано'
-                        )
-                        cases.remove(case)
-                except Exception as e:
-                    pass
-        cases_to_process = []
-        for case in cases:
-            if not CaseModel.objects.filter(case_id=case['caseNumber']).exists():
-                cases_to_process.append(case)
-            else:
-                pass
-        cases = cases_to_process
-        company_black_list = BlackList.objects.filter(type='inn')
-        for case in cases:
-            try:
-                for side in case['sides']:
-                    if side['nSideTypeEnum'] == 'Plaintiff':
-                        if side['inn'] in company_black_list:
-                            raise BlackListException(f"{side['inn']} в черном списке")
-                    if side['nSideTypeEnum'] == 'Respondent' or side['nSideTypeEnum'] == 'OtherRespondent':
-                        stoplist = StopList.objects.all()
-                        for stopword in stoplist:
-                            if stopword.stopword.upper() in side['name'].upper():
-                                models.Case.objects.create(
-                                    process_date=datetime.datetime.now().date(),
-                                    case_id=case['caseNumber'],
-                                    is_success=False,
-                                    error_message=f'Встретилось стоп слово: {stopword.stopword}'
-                                )
-                                raise GetOutOfLoop
-                    if side['typeEnum'] == "Plaintiff":
-                        plaintiff = Side(
-                            name=side['name'],
-                            inn=side['inn'],
-                            ogrn=side['ogrn'],
-                        )
-                    elif side['typeEnum'] == "Respondent":
-                        respondent = Side(
-                            name=side['name'],
-                            inn=side['inn'],
-                            ogrn=side['ogrn'],
-                        )
+            serialized = json.loads(response.data)
+            pages = serialized['result']['pagesCount']
+            cases = []
+            result = []
+            for page in range(1, pages + 1):
+                serialized_page = None
+                curr_query = filter_
+                curr_query['page'] = page
+                curr_query['count'] = 30
+                curr_query['isNeedStat'] = True
+                curr_query = str(curr_query)
+                response = self.http_client.request('POST', 'https://casebook.ru/ms/Search/Cases/Search',
+                                                    body=curr_query.replace('None', 'null')
+                                                    .replace("'", '"')
+                                                    .replace('True', 'true')
+                                                    .replace('False', 'false'),
+                                                    headers=self.headers)
+                serialized_page = json.loads(response.data)
+                for case in serialized_page['result']['items']:
+                    cases.append(case)
+            for case in cases:
+                if len(case['sides']) > 2:
+                    _respondent = 0
+                    _plaintiff = 0
+                    _other = 0
+                    for side in case['sides']:
+                        if side['nSideTypeEnum'] == 'Other':
+                            _other += 1
+                        elif side['nSideTypeEnum'] == 'Plaintiff':
+                            _plaintiff += 1
+                        elif side['nSideTypeEnum'] == 'Respondent':
+                            _respondent += 1
+                        else:
+                            _other += 1
+                    try:
+                        if _respondent > 1:
+                            import casebook
+                            models.Case.objects.create(
+                                process_date=datetime.datetime.now().date(),
+                                case_id=case.number,
+                                is_success=False,
+                                error_message='больше одного ответчика, отфильтровано'
+                            )
+                            cases.remove(case)
+                    except Exception as e:
+                        pass
+            cases_to_process = []
+            for case in cases:
+                if not CaseModel.objects.filter(case_id=case['caseNumber']).exists():
+                    cases_to_process.append(case)
                 else:
-                    case_ = Case(
-                        plaintiff=plaintiff,
-                        respondent=respondent,
-                        court=case['instancesInternal'][0]['court'],
-                        url=f'https://casebook.ru/card/case/{case["caseId"]}',
-                        number=case['caseNumber'],
-                        reg_date=datetime.datetime.fromisoformat(case['startDate']).date(),
-                        _type={
-                            "caseTypeM": case['caseTypeMCode'],
-                            "caseTypeENG": case['caseType']
-                        },
-                        sum_=case['claimSum']
+                    pass
+            cases = cases_to_process
+            company_black_list = BlackList.objects.filter(type='inn')
+            for case in cases:
+                try:
+                    for side in case['sides']:
+                        if side['nSideTypeEnum'] == 'Plaintiff':
+                            if side['inn'] in company_black_list:
+                                raise BlackListException(f"{side['inn']} в черном списке")
+                        if side['nSideTypeEnum'] == 'Respondent' or side['nSideTypeEnum'] == 'OtherRespondent':
+                            stoplist = StopList.objects.all()
+                            for stopword in stoplist:
+                                if stopword.stopword.upper() in side['name'].upper():
+                                    models.Case.objects.create(
+                                        process_date=datetime.datetime.now().date(),
+                                        case_id=case['caseNumber'],
+                                        is_success=False,
+                                        error_message=f'Встретилось стоп слово: {stopword.stopword}'
+                                    )
+                                    raise GetOutOfLoop
+                        if side['typeEnum'] == "Plaintiff":
+                            plaintiff = Side(
+                                name=side['name'],
+                                inn=side['inn'],
+                                ogrn=side['ogrn'],
+                            )
+                        elif side['typeEnum'] == "Respondent":
+                            respondent = Side(
+                                name=side['name'],
+                                inn=side['inn'],
+                                ogrn=side['ogrn'],
+                            )
+                    else:
+                        case_ = Case(
+                            plaintiff=plaintiff,
+                            respondent=respondent,
+                            court=case['instancesInternal'][0]['court'],
+                            url=f'https://casebook.ru/card/case/{case["caseId"]}',
+                            number=case['caseNumber'],
+                            reg_date=datetime.datetime.fromisoformat(case['startDate']).date(),
+                            _type={
+                                "caseTypeM": case['caseTypeMCode'],
+                                "caseTypeENG": case['caseType']
+                            },
+                            sum_=case['claimSum']
+                        )
+                        result.append(case_)
+                except UnboundLocalError:
+                    print(case)
+                    models.Case.objects.create(
+                        process_date=datetime.datetime.now().date(),
+                        case_id=case['caseNumber'],
+                        is_success=False,
+                        error_message=f'Ошибка: {case}'
                     )
-                    result.append(case_)
-            except UnboundLocalError:
-                print(case)
-                models.Case.objects.create(
-                    process_date=datetime.datetime.now().date(),
-                    case_id=case['caseNumber'],
-                    is_success=False,
-                    error_message=f'Ошибка: {case}'
-                )
-            except BlackListException as e:
-                models.Case.objects.create(
-                    process_date=datetime.datetime.now().date(),
-                    case_id=case['caseNumber'],
-                    is_success=False,
-                    error_message=f'Ошибка: {e}'
-                )
-            except GetOutOfLoop:
-                pass
-        return result
+                except BlackListException as e:
+                    models.Case.objects.create(
+                        process_date=datetime.datetime.now().date(),
+                        case_id=case['caseNumber'],
+                        is_success=False,
+                        error_message=f'Ошибка: {e}'
+                    )
+                except GetOutOfLoop:
+                    pass
+            return result
+        except json.decoder.JSONDecodeError as e:
+            print(e.msg)
+            print(e.with_traceback())
+            print(e.doc)
+            raise Exception(e.msg)
