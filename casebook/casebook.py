@@ -256,4 +256,3 @@ class Casebook:
             print(e.msg)
             print(e.with_traceback())
             print(e.doc)
-            raise Exception(e.msg)
