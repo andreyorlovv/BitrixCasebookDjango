@@ -254,5 +254,4 @@ class Casebook:
             return result
         except json.decoder.JSONDecodeError as e:
             print(e.msg)
-            print(e.with_traceback())
             print(e.doc)
