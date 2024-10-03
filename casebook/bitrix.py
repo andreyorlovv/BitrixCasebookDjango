@@ -124,9 +124,12 @@ class BitrixConnect:
             phones.append({'VALUE': str(phone), 'VALUE_TYPE': 'WORK'})
         for email in case.contacts_info['emails']:
             emails.append({'VALUE': str(email), 'VALUE_TYPE': 'WORK'})
-        UF_CRM_1703235529 = 896 if len(case.respondent.inn) == 12 else 898
-        UF_CRM_1703234971 = 893 if rights == True else 894
 
+        UF_CRM_1703235529 = 896 if len(case.respondent.inn) == 12 else 898
+        if type(rights) == bool:
+            UF_CRM_1703234971 = 893 if rights == True else 894
+        elif type(rights) == int:
+            UF_CRM_1703234971 = rights
         # UF_CRM_1703235529 = "Исключительные права" if rights else "Неисключительные права"
         # UF_CRM_1703234971 = "Ответчик - ИП" if len(case.respondent.inn) == 12 else "Ответчик - ООО"
         from casebook.contacts import get_name

@@ -100,6 +100,9 @@ def scan_enchanted(task_id):
                         if task.filter_id == '558875':
                             result = bitrix.create_lead(case, rights=True) if not Case.objects.filter(
                                 case_id=case.number).exists() else print("Уже есть: ", case.number)
+                        elif task.filter_id == '677492':
+                            result = bitrix.create_lead(case, rights=1164) if not Case.objects.filter(
+                                case_id=case.number).exists() else print("Уже есть: ", case.number)
                         else:
                             result = bitrix.create_lead(case, rights=False) if not Case.objects.filter(
                                 case_id=case.number).exists() else print("Уже есть: ", case.number)

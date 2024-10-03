@@ -290,6 +290,10 @@ class EmptyCompanyCredentialsException(Exception):
         return 'Не предоставлены данные для запроса контактных данных'
 
 
+def get_contacts_via_mobius(inn):
+    pass
+
+
 def complex_get_contacts(ogrn=None, inn=None):
     if ogrn is None and inn is None:
         raise EmptyCompanyCredentialsException()
