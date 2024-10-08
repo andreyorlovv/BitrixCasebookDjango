@@ -30,7 +30,7 @@ CSRF_TRUSTED_ORIGINS = ['http://localhost', 'http://185.101.27.108:81', 'http://
 BITRIX_CALLBACK = 'https://crm.yk-cfo.ru/rest/1690/eruxj0nx7ria5j0q/'
 
 CASEBOOK_LOGIN = 'director@yk-cfo.ru'
-CASEBOOK_PASSWORD = 'ykcfo3132'
+CASEBOOK_PASSWORD = 'c-ase2566'
 
 EXPORT_BASE_API_KEY = 'qndxa2xdsu4py68'
 
