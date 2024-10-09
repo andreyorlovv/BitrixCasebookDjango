@@ -54,7 +54,7 @@ class Casebook:
         self.headless_auth(login, password)
         self.http_client.headers.update(self.headers)
 
-        self.get_filters()
+        # self.get_filters()
 
     def headless_auth(self, login: str = None, password: str = None):
             http_client = self.http_client
@@ -101,12 +101,12 @@ class Casebook:
                                             headers=self.headers)
         try:
             serialized = json.loads(response.data)
-        except json.decoder.JSONDecodeError:
-            self.headless_auth()
-        self.filters = [
+            self.filters = [
             {"name": filter_['name'], "id": filter_["id"], "filter": json.loads(filter_['serializedRequest'])}
             for filter_ in serialized['result']]
-
+        except json.decoder.JSONDecodeError:
+            self.headless_auth()
+        
     def get_cases(self, filter_source, timedelta):
         import ast
         serialized = None
