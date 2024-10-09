@@ -83,7 +83,11 @@ class Casebook:
                                                      'Cookie': response.headers['Set-Cookie']
                                                  })
 
+            print("Статус запроса JWT токена =", response_token.status)
+
             token_list = response_token.headers['set-cookie'].split(';')
+            
+
 
             for line in token_list:
                 if '.AuthToken=' in line:
