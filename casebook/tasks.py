@@ -64,11 +64,11 @@ def delete_lead(lead_id):
 @shared_task
 def scan_enchanted(task_id):
     from casebook.casebook import Casebook
-    try:
-        casebook = Casebook(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
-        casebook.headless_auth()
-    except Exception as e:
-        scan_enchanted.apply_async(args=[task_id], countdown=60)
+    #try:
+    casebook = Casebook('director@yk-cfo.ru', 'c-ase2566')
+    casebook.headless_auth('director@yk-cfo.ru', 'c-ase2566')
+    #except Exception as e:
+    #    scan_enchanted.apply_async(args=[task_id], countdown=60)
     bitrix = BitrixConnect(webhook=settings.BITRIX_CALLBACK)
 
     task = Tasks.objects.get(id=task_id)
