@@ -135,6 +135,7 @@ class Casebook:
                                             .replace('True', 'true')
                                             .replace('False', 'false'),
                                             headers=self.headers)
+        print(response.status)
         print(response.data)
         serialized = json.loads(response.data)
         pages = serialized['result']['pagesCount']
