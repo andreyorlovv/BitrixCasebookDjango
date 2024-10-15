@@ -83,7 +83,20 @@ class Casebook:
                                                      'Cookie': response.headers['Set-Cookie']
                                                  })
 
-            token = response_token.headers['set-cookie'].split(';')[0].split('=')[1]
+            print("Статус запроса JWT токена =", response_token.status)
+
+            token_list = response_token.headers['set-cookie'].split(';')
+            
+
+
+            for line in token_list:
+                if '.AuthToken=' in line:
+                    token = line.split('.AuthToken=')[1]
+
+            if token == None:
+                raise Exception('Не получили JWT токен от кейсбука')
+
+            # token = response_token.headers['set-cookie'].split(';')[0].split('=')[1]
 
             self.auth_token = token
             self.auth_email = login
@@ -135,6 +148,7 @@ class Casebook:
                                             .replace('True', 'true')
                                             .replace('False', 'false'),
                                             headers=self.headers)
+        print(response.status)
         print(response.data)
         serialized = json.loads(response.data)
         pages = serialized['result']['pagesCount']
