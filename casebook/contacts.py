@@ -57,61 +57,93 @@ def remove_duplicates(input_list):
 
 
 def process_two_phone(ogrn):
-    links_list = []
-    url2 = "https://checko.ru/company/" + ogrn + "?extra=contacts"
+    # url = "https://checko.ru/company/1167746610745"
+    url = f"https://checko.ru/company/{ogrn}/contacts"
     headers = {
-        'User-Agent': 'Mozila/5.0(Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-    try:
-        response_two_0 = requests.get(url2, headers=headers)
-        soup2 = BeautifulSoup(response_two_0.text, "html.parser")
-        main_element = soup2.find("main", class_="extra-sidebar-page")
-        if main_element:
-            links = main_element.find_all("a", class_="black-link no-underline")
-            if links:
-                for link in links:
-                    print(link)
-                    links_list.append(link["href"][5:])
-            return links_list
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        phone_pattern = re.compile(r'\+7 \d{3} \d{3}-\d{2}-\d{2}')
+        phones = phone_pattern.findall(soup.text)
+        return phones
+    # Легаси, ХЗ почему перестало работать
+    # links_list = []
+    # url2 = "https://checko.ru/company/" + ogrn + "?extra=contacts"
+    # headers = {
+    #     'User-Agent': 'Mozila/5.0(Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+    # try:
+        # response_two_0 = requests.get(url2, headers=headers)
+        # soup2 = BeautifulSoup(response_two_0.content.decode('utf-8'), "html.parser")
+        # main_element = soup2.find("main", class_="extra-sidebar-page")
+        # dom: Element = etree.HTML(str(soup2))
+        # main_element = dom.xpath('/html/body/main/div[2]/div/article/section[3]/div[3]/div[1]')
+        # print(soup2.find())
+        # soup2 = BeautifulSoup(response_two_0.content.decode('utf-8'), "html.parser")
+        # main_element = soup2.find("main", class_="flex-shrink-0 x-page")
+
+        # if main_element:
+        #     links = main_element.find_all("a", class_="black-link no-underline")
+        #     if links:
+        #         for link in links:
+        #             print(link)
+        #             links_list.append(link["href"][5:])
+        #     return links_list
 
         # await process_string(find_phone(info_two.text), number_list)
         # await process_email_string(find_mail(info_two.text), email_list)
-    except Exception as e:
-        pass
+    # except Exception as e:
+    #     pass
 
 
 def process_two_email(ogrn):
-    links_list = list()
-    email_regex = re.compile(
-        r"""^\S+@\S+\.\S+$""",
-        re.IGNORECASE)
-    url2 = "https://checko.ru/company/" + ogrn + "?extra=contacts"
+    url = f"https://checko.ru/company/{ogrn}/contacts"
+
     headers = {
-        'User-Agent': 'Mozila/5.0(Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-    try:
-        response_two_0 = requests.get(url2, headers=headers)
-        soup2 = BeautifulSoup(response_two_0.text, "html.parser")
-        main_element = soup2.find("main", class_="extra-sidebar-page")
-        if main_element:
-            links = main_element.find_all("a", class_="link", rel="nofollow")
-            if links:
-                for link in links:
-                    email = link["href"][7:].replace('\xa0', '')
-                    if email_regex.match(email):
-                        links_list.append(email)
-                email = None
-            return links_list
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        email_pattern = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
+        emails = email_pattern.findall(soup.text)
+        emails = list(set(emails))
+        return emails
+
+    # links_list = list()
+    # email_regex = re.compile(
+    #     r"""^\S+@\S+\.\S+$""",
+    #     re.IGNORECASE)
+    # url2 = "https://checko.ru/company/" + ogrn + "?extra=contacts"
+    # headers = {
+    #     'User-Agent': 'Mozila/5.0(Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+    # try:
+    #     response_two_0 = requests.get(url2, headers=headers)
+    #     soup2 = BeautifulSoup(response_two_0.text, "html.parser")
+    #     main_element = soup2.find("main", class_="extra-sidebar-page")
+    #     if main_element:
+    #         links = main_element.find_all("a", class_="link", rel="nofollow")
+    #         if links:
+    #             for link in links:
+    #                 email = link["href"][7:].replace('\xa0', '')
+    #                 if email_regex.match(email):
+    #                     links_list.append(email)
+    #             email = None
+    #         return links_list
 
         # await process_string(find_phone(info_two.text), number_list)
         # await process_email_string(find_mail(info_two.text), email_list)
-    except Exception as e:
-        pass
+    # except Exception as e:
+    #     pass
 
 
 def get_name(inn: str) -> str:
     inn = str(inn)
     url = f"https://checko.ru/company/{inn}"
     headers = {
-        'User-Agent': 'Mozila/5.0(Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        'User-Agent': 'Mozila/5.0(Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                      'Chrome/91.0.4472.124 Safari/537.36'}
     try:
         response = requests.get(url, headers=headers)
         soup2 = BeautifulSoup(response.text, "html.parser")
@@ -184,7 +216,7 @@ def get_contacts(inn, ogrn):
         number = number.replace('(', '')
         number = number.replace(')', '')
         number = number.replace('-', '')
-        valid_numbers.append(number) #if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
+        valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
 
     black_list_number = BlackList.objects.filter(type='phone')
 
@@ -261,7 +293,7 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         number = number.replace('(', '')
         number = number.replace(')', '')
         number = number.replace('-', '')
-        valid_numbers.append(number) #if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
+        valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
 
     result_numbers = []
 
@@ -298,9 +330,19 @@ def complex_get_contacts(ogrn=None, inn=None):
     if ogrn is None and inn is None:
         raise EmptyCompanyCredentialsException()
 
+
 # if __name__ == '__main__':
-#     print(get_name("1167746610745"))
-#     print(get_name("1105250003044"))
-#     print(get_name("1027700035769"))
-#     print(get_name("1180280001989"))
+#     result = process_two_phone("1180280001989")
+#     result2 = process_two_email("1180280001989")
+#     print(result2)
+#
+#     a = []
+#     for number in result:
+#         number = number.replace('+7', '7')
+#         number = number.replace(' ', '')
+#         number = number.replace('(', '')
+#         number = number.replace(')', '')
+#         number = number.replace('-', '')
+#         a.append(number)
+#     print(a)
 #     print(type(get_name("1105476078575")))
