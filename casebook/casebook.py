@@ -148,8 +148,7 @@ class Casebook:
                                             .replace('True', 'true')
                                             .replace('False', 'false'),
                                             headers=self.headers)
-        print(response.status)
-        print(response.data)
+        print("Статус запроса кол-ва страниц", response.status)
         serialized = json.loads(response.data)
         pages = serialized['result']['pagesCount']
         cases = []
@@ -167,8 +166,7 @@ class Casebook:
                                                 .replace('True', 'true')
                                                 .replace('False', 'false'),
                                                 headers=self.headers)
-            print(response.status)
-            print(response.data)
+            print("Статус запроса", page, '-ой страницы', response.status)
             serialized_page = json.loads(response.data)
             for case in serialized_page['result']['items']:
                 cases.append(case)
@@ -251,7 +249,6 @@ class Casebook:
                     )
                     result.append(case_)
             except UnboundLocalError:
-                print(case)
                 models.Case.objects.create(
                     process_date=datetime.datetime.now().date(),
                     case_id=case['caseNumber'],
