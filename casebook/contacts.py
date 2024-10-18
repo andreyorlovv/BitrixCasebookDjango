@@ -313,6 +313,10 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         else:
             result_email.append(email)
 
+    print("Полученные контакты -", {'numbers': result_numbers,
+                                    'emails': result_email}
+)
+
     return {'numbers': result_numbers,
             'emails': result_email}
 
