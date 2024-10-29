@@ -138,15 +138,19 @@ def get_contacts(inn, ogrn):
 
     number_list.extend(process_checko_phone(ogrn))
     email_list.extend(process_checko_email(ogrn))
+    
+    print(f'(0) -> {number_list} | {email_list}')
 
     try:
         numbers_from_sbis, email_from_sbis = process_sbis_base(inn)
     except Exception as e:
         print(e)
-        
+    
     number_list.extend(numbers_from_sbis)
     email_list.extend(email_from_sbis)
-
+    
+    print(f'(1) -> {number_list} | {email_list}')
+    
     valid_numbers = []
 
     for number in number_list:
@@ -157,11 +161,15 @@ def get_contacts(inn, ogrn):
         number = number.replace('-', '')
         if not BlackList.objects.filter(number=number).exists():
             valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
+            
+    print(f'(2) -> {number_list} | {email_list}')
 
     result_email = []
     for email in email_list:
         if not BlackList.objects.filter(email=email).exists():
             result_email.append(email)
+            
+    print(f'(3) -> {number_list} | {email_list}')
 
     result_numbers = list(set(valid_numbers))
     result_email = list(set(email_list))
