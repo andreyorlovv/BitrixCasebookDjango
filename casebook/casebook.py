@@ -83,7 +83,7 @@ class Casebook:
                                                      'Cookie': response.headers['Set-Cookie']
                                                  })
 
-            print("Статус запроса JWT токена = " + response_token.status)
+            print("Статус запроса JWT токена = " + str(response_token.status))
 
             token_list = response_token.headers['set-cookie'].split(';')
             
@@ -148,7 +148,7 @@ class Casebook:
                                             .replace('True', 'true')
                                             .replace('False', 'false'),
                                             headers=self.headers)
-        print("Статус запроса кол-ва страниц " + response.status)
+        print(f"Статус запроса кол-ва страниц - {response.status}")
         serialized = json.loads(response.data)
         pages = serialized['result']['pagesCount']
         cases = []
@@ -166,7 +166,7 @@ class Casebook:
                                                 .replace('True', 'true')
                                                 .replace('False', 'false'),
                                                 headers=self.headers)
-            print("Статус запроса " + page +'-ой страницы ' + response.status)
+            print(f"Статус запроса {page}-ой страницы - {response.status}")
             serialized_page = json.loads(response.data)
             for case in serialized_page['result']['items']:
                 cases.append(case)
