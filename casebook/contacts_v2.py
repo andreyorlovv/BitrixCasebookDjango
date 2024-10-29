@@ -135,20 +135,24 @@ def process_listorg(ogrn, inn):
 def get_contacts(inn, ogrn):
     number_list = []
     email_list = []
-
-    number_list.extend(process_checko_phone(ogrn))
-    email_list.extend(process_checko_email(ogrn))
-    
+    try:
+        number_list.extend(process_checko_phone(ogrn))
+        email_list.extend(process_checko_email(ogrn))
+    except TypeError:
+        pass
     print(f'(0) -> {number_list} | {email_list}')
 
     try:
         numbers_from_sbis, email_from_sbis = process_sbis_base(inn)
     except Exception as e:
         print(e)
-    
-    number_list.extend(numbers_from_sbis)
-    email_list.extend(email_from_sbis)
-    
+        
+    try:
+        number_list.extend(numbers_from_sbis)
+        email_list.extend(email_from_sbis)
+    except TypeError:
+        pass
+        
     print(f'(1) -> {number_list} | {email_list}')
     
     valid_numbers = []
@@ -163,7 +167,7 @@ def get_contacts(inn, ogrn):
             print(f'{number}')
         valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
             
-    print(f'(2) -> {number_list} | {email_list}')
+    print(f'(2) -> {valid_numbers} | {email_list}')
 
     result_email = []
     for email in email_list:
@@ -171,7 +175,7 @@ def get_contacts(inn, ogrn):
             print(email)
     
             
-    print(f'(3) -> {number_list} | {email_list}')
+    print(f'(3) -> {valid_numbers} | {email_list}')
 
     result_numbers = list(set(valid_numbers))
     result_email = list(set(email_list))
