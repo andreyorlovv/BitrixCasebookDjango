@@ -135,8 +135,6 @@ class BitrixConnect:
         from casebook.contacts import get_name
         name = get_name(case.respondent.ogrn)
 
-        full_name = ['', '', '']
-
         if type(name) != NoneType:
             if len(name) < 4:
                 print("Не удалось найти ФИО")

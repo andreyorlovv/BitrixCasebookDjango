@@ -7,7 +7,7 @@ from django.db.models import QuerySet
 from fast_bitrix24.server_response import ErrorInServerResponseException
 
 from casebook.bitrix import BitrixConnect
-from casebook.contacts import get_contacts_via_export_base, get_contacts
+from casebook.contacts_v2 import get_contacts_via_export_base, get_contacts
 from casebook.models import Filter, Case, Tasks
 
 
