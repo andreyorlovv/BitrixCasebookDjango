@@ -104,6 +104,7 @@ def process_sbis_base(inn):
         connection = sqlite3.connect('contacts.sqlite')
         cursor = connection.cursor()
         result = cursor.execute(f'SELECT email, phones FROM contacts_contact WHERE inn={inn}').fetchone()
+        print(result[0], result[1])
         return json.loads(result[0]), json.loads(result[1])
     except Exception as e:
         pass
