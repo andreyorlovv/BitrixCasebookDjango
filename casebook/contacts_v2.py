@@ -142,15 +142,12 @@ def get_contacts(inn, ogrn):
         pass
     try:
         numbers_from_sbis, email_from_sbis = process_sbis_base(inn)
-    except Exception as e:
-        print(e)
-        
-    try:
         number_list.extend(numbers_from_sbis)
         email_list.extend(email_from_sbis)
     except TypeError:
         pass
-            
+    except Exception as e:
+        print(e)       
     valid_numbers = []
 
     for number in number_list:
