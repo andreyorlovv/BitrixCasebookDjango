@@ -100,10 +100,13 @@ def get_name(ogrn: str) -> str:
 
 
 def process_sbis_base(inn):
-    connection = sqlite3.connect('contacts.sqlite')
-    cursor = connection.cursor()
-    result = cursor.execute(f'SELECT email, phones FROM contacts_contact WHERE inn={inn}').fetchone()
-    return json.loads(result[0]), json.loads(result[1])
+    try:
+        connection = sqlite3.connect('contacts.sqlite')
+        cursor = connection.cursor()
+        result = cursor.execute(f'SELECT email, phones FROM contacts_contact WHERE inn={inn}').fetchone()
+        return json.loads(result[0]), json.loads(result[1])
+    except Exception as e:
+        pass
 
 
 def process_listorg(ogrn, inn):
