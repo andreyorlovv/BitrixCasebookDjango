@@ -140,8 +140,6 @@ def get_contacts(inn, ogrn):
         email_list.extend(process_checko_email(ogrn))
     except TypeError:
         pass
-    print(f'(0) -> {number_list} | {email_list}')
-
     try:
         numbers_from_sbis, email_from_sbis = process_sbis_base(inn)
     except Exception as e:
@@ -152,9 +150,7 @@ def get_contacts(inn, ogrn):
         email_list.extend(email_from_sbis)
     except TypeError:
         pass
-        
-    print(f'(1) -> {number_list} | {email_list}')
-    
+            
     valid_numbers = []
 
     for number in number_list:
@@ -163,16 +159,15 @@ def get_contacts(inn, ogrn):
         number = number.replace('(', '')
         number = number.replace(')', '')
         number = number.replace('-', '')
-        if not BlackList.objects.filter(number=number).exists():
-            print(f'{number}')
-        valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
+        if not BlackList.objects.filter(value=number).exists():
+            valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
             
     print(f'(2) -> {valid_numbers} | {email_list}')
 
     result_email = []
     for email in email_list:
-        if not BlackList.objects.filter(email=email).exists():
-            print(email)
+        if not BlackList.objects.filter(value=email).exists():
+            result_email.append(email)
     
             
     print(f'(3) -> {valid_numbers} | {email_list}')
@@ -236,13 +231,12 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         number = number.replace(')', '')
         number = number.replace('-', '')
         if not BlackList.objects.filter(number=number).exists():
-            print(f'{number}')
-        valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
+            valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
 
     result_email = []
     for email in email_list:
-        if not BlackList.objects.filter(email=email).exists():
-            print(email)
+        if not BlackList.objects.filter(value=email).exists():
+            result_email.append(email)
 
     print("Полученные контакты -", {'numbers': result_numbers,
                                     'emails': result_email})
