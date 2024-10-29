@@ -160,14 +160,16 @@ def get_contacts(inn, ogrn):
         number = number.replace(')', '')
         number = number.replace('-', '')
         if not BlackList.objects.filter(number=number).exists():
-            valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
+            print(f'{number}')
+        valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
             
     print(f'(2) -> {number_list} | {email_list}')
 
     result_email = []
     for email in email_list:
         if not BlackList.objects.filter(email=email).exists():
-            result_email.append(email)
+            print(email)
+    
             
     print(f'(3) -> {number_list} | {email_list}')
 
@@ -230,12 +232,13 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         number = number.replace(')', '')
         number = number.replace('-', '')
         if not BlackList.objects.filter(number=number).exists():
-            valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
+            print(f'{number}')
+        valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
 
     result_email = []
     for email in email_list:
         if not BlackList.objects.filter(email=email).exists():
-            result_email.append(email)
+            print(email)
 
     print("Полученные контакты -", {'numbers': result_numbers,
                                     'emails': result_email})
