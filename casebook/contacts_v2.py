@@ -104,7 +104,6 @@ def process_sbis_base(inn):
         connection = sqlite3.connect('contacts.sqlite')
         cursor = connection.cursor()
         result = cursor.execute(f'SELECT email, phones FROM contacts_contact WHERE inn={inn}').fetchone()
-        print(result[0], result[1])
         return json.loads(result[0]), json.loads(result[1])
     except Exception as e:
         pass
@@ -167,6 +166,9 @@ def get_contacts(inn, ogrn):
     result_numbers = list(set(valid_numbers))
     result_email = list(set(email_list))
 
+    print("Полученные контакты -", {'numbers': result_numbers,
+                                    'emails': result_email})
+    
     return {'numbers': result_numbers,
             'emails': result_email}
 
@@ -227,6 +229,9 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         if not BlackList.objects.filter(email=email).exists():
             result_email.append(email)
 
+    print("Полученные контакты -", {'numbers': result_numbers,
+                                    'emails': result_email})
+    
     return {'numbers': valid_numbers,
             'emails': result_email}
 
