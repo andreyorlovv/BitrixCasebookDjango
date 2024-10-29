@@ -140,8 +140,11 @@ def get_contacts(inn, ogrn):
     number_list.extend(process_checko_phone(ogrn))
     email_list.extend(process_checko_email(ogrn))
 
-    numbers_from_sbis, email_from_sbis = process_sbis_base(inn)
-
+    try:
+        numbers_from_sbis, email_from_sbis = process_sbis_base(inn)
+    except Exception as e:
+        print(e)
+        
     number_list.extend(numbers_from_sbis)
     email_list.extend(email_from_sbis)
 
