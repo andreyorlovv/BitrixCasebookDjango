@@ -141,7 +141,7 @@ def get_contacts(inn, ogrn):
     except TypeError:
         pass
     try:
-        numbers_from_sbis, email_from_sbis = process_sbis_base(inn)
+        email_from_sbis, numbers_from_sbis = process_sbis_base(inn)
         number_list.extend(numbers_from_sbis)
         email_list.extend(email_from_sbis)
     except TypeError:
