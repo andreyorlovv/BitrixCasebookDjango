@@ -132,7 +132,7 @@ class BitrixConnect:
             UF_CRM_1703234971 = rights
         # UF_CRM_1703235529 = "Исключительные права" if rights else "Неисключительные права"
         # UF_CRM_1703234971 = "Ответчик - ИП" if len(case.respondent.inn) == 12 else "Ответчик - ООО"
-        from casebook.contacts import get_name
+        from casebook.contacts_v2 import get_name
         name = get_name(case.respondent.ogrn)
 
         if type(name) != NoneType:
