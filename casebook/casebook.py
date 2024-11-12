@@ -208,6 +208,17 @@ class Casebook:
             try:
                 for side in case['sides']:
                     if side['nSideTypeEnum'] == 'Plaintiff':
+                        try:
+                            if BlackList.objects.filter(value=side['inn']).exists():
+                                raise BlackListException(f"{side['inn']} в черном списке")
+                            else: pass
+                        except BlackListException as e:
+                            models.Case.objects.create(
+                                process_date=datetime.datetime.now().date(),
+                                case_id=case['caseNumber'],
+                                is_success=False,
+                                error_message=f'Ошибка: {e}'
+                            )
                         if side['inn'] in company_black_list:
                             raise BlackListException(f"{side['inn']} в черном списке")
                     if side['nSideTypeEnum'] == 'Respondent' or side['nSideTypeEnum'] == 'OtherRespondent':
