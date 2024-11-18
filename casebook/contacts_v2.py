@@ -235,7 +235,7 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         if not BlackList.objects.filter(value=email).exists():
             result_email.append(email)
 
-    print("Полученные контакты -", {'numbers': result_numbers,
+    print("Полученные контакты -", {'numbers': valid_numbers,
                                     'emails': result_email})
     
     return {'numbers': valid_numbers,
