@@ -227,7 +227,7 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         number = number.replace('(', '')
         number = number.replace(')', '')
         number = number.replace('-', '')
-        if not BlackList.objects.filter(number=number).exists():
+        if not BlackList.objects.filter(value=number).exists():
             valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
 
     result_email = []
