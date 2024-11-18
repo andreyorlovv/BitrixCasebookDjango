@@ -11,7 +11,7 @@ class Filter(models.Model):
 
 class Case(models.Model):
     process_date = models.DateField(verbose_name="Дата обработка")
-    case_id = models.CharField(max_length=32, verbose_name="ID в CaseBook")
+    case_id = models.CharField(max_length=64, verbose_name="ID в CaseBook")
     is_success = models.BooleanField(default=False, verbose_name="Успешно выполнено?")
     error_message = models.TextField(blank=True, null=True, verbose_name="Ошибка, если не успешно")
     bitrix_lead_id = models.CharField(blank=True, null=True, verbose_name="ID лида в Б24")
