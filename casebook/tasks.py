@@ -34,8 +34,8 @@ def update_filters():
     casebook = Casebook(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
     filters = casebook.filters
     for filter_ in filters:
-        filters_db = Filter.objects.filter(filter_id=filter_['id']).first()
-        if filters_db is None:
+        filters_db = Filter.objects.filter(filter_id=filter_['id']).exist()
+        if filters_db == False:
             new = Filter(name=filter_['name'],
                          filter_id=filter_['id'],
                          value=json.dumps(filter_))
@@ -100,6 +100,10 @@ def scan_enchanted(task_id):
                         if task.filter_id == '558875':
                             result = bitrix.create_lead(case, rights=True) if not Case.objects.filter(
                                 case_id=case.number).exists() else print("Уже есть: ", case.number)
+                        elif task.filter_id == '515745':
+                            result = bitrix.create_lead(case, rights=1169) if not Case.objects.filter(
+                                case_id=case.number).exists() else print("Уже есть: ", case.number)
+    
                         elif task.filter_id == '677492':
                             result = bitrix.create_lead(case, rights=1164) if not Case.objects.filter(
                                 case_id=case.number).exists() else print("Уже есть: ", case.number)
