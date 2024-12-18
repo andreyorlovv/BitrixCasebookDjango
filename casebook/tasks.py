@@ -33,6 +33,7 @@ def update_filters():
     from casebook.casebook import Casebook
     casebook = Casebook(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
     filters = casebook.get_filters()
+    print(filters)
     for filter_ in filters:
         filters_db = Filter.objects.filter(filter_id=filter_['id']).exist()
         if filters_db == False:
