@@ -110,8 +110,10 @@ class Casebook:
             }
 
     def get_filters(self):
+        self.headless_auth()
         response = self.http_client.request('GET', 'https://casebook.ru/ms/UserData/SavedSearch/List',
                                             headers=self.headers)
+        print(response.status, response.data)
         try:
             serialized = json.loads(response.data)
             self.filters = [
