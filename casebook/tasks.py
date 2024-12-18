@@ -1,4 +1,4 @@
-import datetime
+pimport datetime
 import json
 
 from celery import shared_task
@@ -35,8 +35,8 @@ def update_filters():
     filters = casebook.get_filters()
     print(filters)
     for filter_ in filters:
-        filters_db = Filter.objects.filter(filter_id=filter_['id']).exist()
-        if filters_db == False:
+        filters_db = Filter.objects.filter(filter_id=filter_['id']).first()
+        if filters_db is None:
             new = Filter(name=filter_['name'],
                          filter_id=filter_['id'],
                          value=json.dumps(filter_))
