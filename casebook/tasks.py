@@ -32,7 +32,7 @@ def get_tasks_from_db():
 def update_filters():
     from casebook.casebook import Casebook
     casebook = Casebook(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
-    filters = casebook.filters
+    filters = casebook.get_filters()
     for filter_ in filters:
         filters_db = Filter.objects.filter(filter_id=filter_['id']).exist()
         if filters_db == False:
