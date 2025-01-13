@@ -96,9 +96,9 @@ def scan_enchanted(task_id):
                     case.contacts_info = {'emails': [], 'numbers': []}
                     case.contacts_info = get_contacts_via_export_base(ogrn=case.respondent.ogrn,
                                                                       key=settings.EXPORT_BASE_API_KEY)
-                if case.contacts_info['numbers']:
+                if case.contacts_info['numbers'] and task.contacts:
                     case.contacts_info['numbers'] = case.contacts_info['numbers'][0:task.contacts]
-                if case.contacts_info['emails']:
+                if case.contacts_info['emails'] and task.emails:
                     case.contacts_info['emails'] = case.contacts_info['emails'][0:task.emails]
                 if not Case.objects.filter(case_id=case.number).exists():
                     try:

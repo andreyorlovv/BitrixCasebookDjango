@@ -226,6 +226,7 @@ class Casebook:
                             )
                         if side['inn'] in company_black_list:
                             raise BlackListException(f"{side['inn']} в черном списке")
+                    # TODO: Вынести проверку и инверсию истца и ответика сюда, до прогона стоп-листа
                     if side['nSideTypeEnum'] == 'Respondent' or side['nSideTypeEnum'] == 'OtherRespondent':
                         stoplist = StopList.objects.all()
                         for stopword in stoplist:
