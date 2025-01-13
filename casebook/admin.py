@@ -3,7 +3,7 @@ from django.http import HttpResponse
 
 import casebook.tasks
 from casebook.forms import ExcelReportForm
-from casebook.models import Case, StopList, BlackList
+from casebook.models import Case, StopList, BlackList, Tasks
 
 
 # Register your models here.
@@ -47,4 +47,5 @@ class BlackListAdmin(admin.ModelAdmin):
 admin.site.register(Case, CaseAdmin)
 admin.site.register(StopList, StopListAdmin)
 admin.site.register(BlackList, BlackListAdmin)
+admin.site.register(Tasks)
 admin.site.site_header = 'Парсер Casebook'

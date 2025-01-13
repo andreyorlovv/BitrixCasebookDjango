@@ -39,6 +39,10 @@ class Tasks(models.Model):
     iteration_interval = models.IntegerField()
     filter_id = models.CharField(max_length=64)
     last_execution = models.DateTimeField(blank=True, null=True)
+    to_load = models.IntegerField(blank=True, null=True)
+    cash = models.IntegerField(blank=True, null=True)
+    contacts = models.IntegerField(blank=True, null=True)
+    emails = models.IntegerField(blank=True, null=True)
 
 
 class BlackList(models.Model):

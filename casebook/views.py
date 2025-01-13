@@ -27,6 +27,10 @@ def custom_index(request):
         Tasks.objects.create(days_expire=form.data['time_delta'],
                              iteration_interval=form.data['interval'],
                              filter_id=select_data['filter_id'],
+                             to_load=form.data['to_load'],
+                             cash=form.data['cash'] if form.data['cash'] else None,
+                             contacts=form.data['contacts'],
+                             emails=form.data['emails'],
                              last_execution=None
                              )
         get_tasks_from_db.apply_async()

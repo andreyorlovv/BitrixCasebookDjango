@@ -16,9 +16,10 @@
                 <form method="post">
                     {% csrf_token %}
                     {{ form_create.as_p }}
-                    <input type="submit" value="Добавить в обработку">
+                    <input class="btn btn-success" type="submit" value="Добавить в обработку">
+                    <a href="/update_filters/" class="btn btn-outline-success" style="margin-left: 20%">Обновить фильтры</a>
                 </form>
-                <a href="/update_filters/" class="btn btn-success" style="margin-top: 1rem">Обновить фильтры</a>
+
         </div>
     </div>
     {% endif %}

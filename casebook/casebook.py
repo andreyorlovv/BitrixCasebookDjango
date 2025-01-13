@@ -123,7 +123,7 @@ class Casebook:
         except json.decoder.JSONDecodeError:
             self.headless_auth()
         
-    def get_cases(self, filter_source, timedelta):
+    def get_cases(self, filter_source, timedelta, cash, to_load):
         import ast
         serialized = None
         i = 0
@@ -174,6 +174,8 @@ class Casebook:
             for case in serialized_page['result']['items']:
                 cases.append(case)
         for case in cases:
+            if cash:
+                if case['claimSum'] < cash: continue
             if len(case['sides']) > 2:
                 _respondent = 0
                 _plaintiff = 0
@@ -248,6 +250,8 @@ class Casebook:
                             ogrn=side['ogrn'],
                         )
                 else:
+                    if to_load == 1:
+                        plaintiff, respondent = respondent, plaintiff
                     case_ = Case(
                         plaintiff=plaintiff,
                         respondent=respondent,

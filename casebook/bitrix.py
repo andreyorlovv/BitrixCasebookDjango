@@ -196,8 +196,10 @@ class BitrixConnect:
                 "ASSIGNED_BY_ID": 9
             }}
 
-        result = self.bitrix.call('crm.lead.add',
-                                  items=items)
+        result = '' # self.bitrix.call('crm.lead.add',
+                    #              items=items)
+        print(items)
+
         return result
 
     def delete_lead(self, lead_id):
