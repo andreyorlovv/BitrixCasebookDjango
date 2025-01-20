@@ -123,7 +123,7 @@ class Casebook:
         except json.decoder.JSONDecodeError:
             self.headless_auth()
         
-    def get_cases(self, filter_source, timedelta, cash, to_load):
+    def get_cases(self, filter_source, timedelta, to_load, cash=None):
         import ast
         serialized = None
         i = 0
@@ -175,7 +175,14 @@ class Casebook:
                 cases.append(case)
         for case in cases:
             if cash:
-                if case['claimSum'] < cash: continue
+                if case['claimSum'] < cash and case['claimSum'] != 0.0:
+                    import casebook
+                    models.Case.objects.create(
+                        process_date=datetime.datetime.now().date(),
+                        case_id=case['caseNumber'],
+                        is_success=False,
+                        error_message=f'Сумма дела меньше целевой: {cash} > {case["claimSum"]}'
+                    )
             if len(case['sides']) > 2:
                 _respondent = 0
                 _plaintiff = 0
@@ -194,7 +201,7 @@ class Casebook:
                         import casebook
                         models.Case.objects.create(
                             process_date=datetime.datetime.now().date(),
-                            case_id=case.number,
+                            case_id=case['caseNumber'],
                             is_success=False,
                             error_message='больше одного ответчика, отфильтровано'
                         )
@@ -211,8 +218,23 @@ class Casebook:
         company_black_list = BlackList.objects.filter(type='inn')
         for case in cases:
             try:
+                plaintiff = None
+                respondent = None
                 for side in case['sides']:
-                    if side['nSideTypeEnum'] == 'Plaintiff':
+                    if side['typeEnum'] == "Plaintiff":
+                        plaintiff = Side(
+                            name=side['name'],
+                            inn=side['inn'],
+                            ogrn=side['ogrn'],
+                        )
+                    elif side['typeEnum'] == "Respondent":
+                        respondent = Side(
+                            name=side['name'],
+                            inn=side['inn'],
+                            ogrn=side['ogrn'],
+                        )
+                    # Создание 2х сущностей, истец ответчик
+                    if plaintiff:
                         try:
                             if BlackList.objects.filter(value=side['inn']).exists():
                                 raise BlackListException(f"{side['inn']} в черном списке")
@@ -227,7 +249,7 @@ class Casebook:
                         if side['inn'] in company_black_list:
                             raise BlackListException(f"{side['inn']} в черном списке")
                     # TODO: Вынести проверку и инверсию истца и ответика сюда, до прогона стоп-листа
-                    if side['nSideTypeEnum'] == 'Respondent' or side['nSideTypeEnum'] == 'OtherRespondent':
+                    if respondent or side['nSideTypeEnum'] == 'OtherRespondent':
                         stoplist = StopList.objects.all()
                         for stopword in stoplist:
                             if stopword.stopword.upper() in side['name'].upper():
@@ -238,35 +260,21 @@ class Casebook:
                                     error_message=f'Встретилось стоп слово: {stopword.stopword}'
                                 )
                                 raise GetOutOfLoop
-                    if side['typeEnum'] == "Plaintiff":
-                        plaintiff = Side(
-                            name=side['name'],
-                            inn=side['inn'],
-                            ogrn=side['ogrn'],
-                        )
-                    elif side['typeEnum'] == "Respondent":
-                        respondent = Side(
-                            name=side['name'],
-                            inn=side['inn'],
-                            ogrn=side['ogrn'],
-                        )
-                else:
-                    if to_load == 1:
-                        plaintiff, respondent = respondent, plaintiff
-                    case_ = Case(
-                        plaintiff=plaintiff,
-                        respondent=respondent,
-                        court=case['instancesInternal'][0]['court'],
-                        url=f'https://casebook.ru/card/case/{case["caseId"]}',
-                        number=case['caseNumber'],
-                        reg_date=datetime.datetime.fromisoformat(case['startDate']).date(),
-                        _type={
-                            "caseTypeM": case['caseTypeMCode'],
-                            "caseTypeENG": case['caseType']
-                        },
-                        sum_=case['claimSum']
-                    )
-                    result.append(case_)
+                if to_load == 1: plaintiff, respondent = respondent, plaintiff
+                case_ = Case(
+                    plaintiff=plaintiff,
+                    respondent=respondent,
+                    court=case['instancesInternal'][0]['court'],
+                    url=f'https://casebook.ru/card/case/{case["caseId"]}',
+                    number=case['caseNumber'],
+                    reg_date=datetime.datetime.fromisoformat(case['startDate']).date(),
+                    _type={
+                        "caseTypeM": case['caseTypeMCode'],
+                        "caseTypeENG": case['caseType']
+                    },
+                    sum_=case['claimSum']
+                )
+                result.append(case_)
             except UnboundLocalError:
                 models.Case.objects.create(
                     process_date=datetime.datetime.now().date(),
