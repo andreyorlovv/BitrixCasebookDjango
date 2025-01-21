@@ -42,7 +42,7 @@ class Tasks(models.Model):
     to_load = models.IntegerField(blank=True, null=True)
     cash = models.IntegerField(blank=True, null=True)
     scan_p = models.BooleanField(default=False)
-    scan_r = models.BooleanField(default=True)
+    scan_r = models.BooleanField(default=False)
     contacts = models.IntegerField(blank=True, null=True)
     emails = models.IntegerField(blank=True, null=True)
 

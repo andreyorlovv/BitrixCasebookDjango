@@ -32,8 +32,8 @@ def custom_index(request):
                              contacts=form.data['contacts'],
                              emails=form.data['emails'],
                              last_execution=None,
-                             scan_r=form.data['scan_r'],
-                             scan_p=form.data['scan_p'],
+                             scan_r=form.data['scan_r'] if form.data['scan_r'] else None,
+                             scan_p=form.data['scan_p'] if form.data['scan_p'] else None,
                              )
         get_tasks_from_db.apply_async()
     filters = Filter.objects.all()
