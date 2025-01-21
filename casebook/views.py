@@ -24,6 +24,7 @@ def custom_index(request):
         form = SetupParseForm(request.POST)
         import ast
         select_data = ast.literal_eval(form.data['select'])
+        print(form.data['scan_r'])
         Tasks.objects.create(days_expire=form.data['time_delta'],
                              iteration_interval=form.data['interval'],
                              filter_id=select_data['filter_id'],
@@ -32,8 +33,8 @@ def custom_index(request):
                              contacts=form.data['contacts'],
                              emails=form.data['emails'],
                              last_execution=None,
-                             scan_r=form.data['scan_r'] if form.data['scan_r'] else None,
-                             scan_p=form.data['scan_p'] if form.data['scan_p'] else None,
+                             scan_r=True if form.data.get('scan_r') == 'on' else False,
+                             scan_p=True if form.data.get('scan_r') == 'on' else False,
                              )
         get_tasks_from_db.apply_async()
     filters = Filter.objects.all()
