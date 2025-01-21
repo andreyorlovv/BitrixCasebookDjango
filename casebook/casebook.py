@@ -123,7 +123,7 @@ class Casebook:
         except json.decoder.JSONDecodeError:
             self.headless_auth()
         
-    def get_cases(self, filter_source, timedelta, to_load, cash=None):
+    def get_cases(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True):
         import ast
         serialized = None
         i = 0
@@ -175,7 +175,7 @@ class Casebook:
                 cases.append(case)
         for case in cases:
             if cash:
-                if case['claimSum'] < cash and case['claimSum'] != 0.0:
+                if case['claimSum'] < cash and case['claimSum'] != 0.0 and not CaseModel.objects.filter(case_id=case['caseNumber']).exists():
                     import casebook
                     models.Case.objects.create(
                         process_date=datetime.datetime.now().date(),
@@ -249,7 +249,7 @@ class Casebook:
                         if side['inn'] in company_black_list:
                             raise BlackListException(f"{side['inn']} в черном списке")
                     # TODO: Вынести проверку и инверсию истца и ответика сюда, до прогона стоп-листа
-                    if respondent or side['nSideTypeEnum'] == 'OtherRespondent':
+                    if respondent or side['nSideTypeEnum'] == 'OtherRespondent' and scan_r:
                         stoplist = StopList.objects.all()
                         for stopword in stoplist:
                             if stopword.stopword.upper() in side['name'].upper():
@@ -260,6 +260,17 @@ class Casebook:
                                     error_message=f'Встретилось стоп слово: {stopword.stopword}'
                                 )
                                 raise GetOutOfLoop
+                    if plaintiff and scan_p:
+                        stoplist = StopList.objects.all()
+                        for stopword in stoplist:
+                            if stopword.stopword.upper() in side['name'].upper():
+                                models.Case.objects.create(
+                                    process_date=datetime.datetime.now().date(),
+                                    case_id=case['caseNumber'],
+                                    is_success=False,
+                                    error_message=f'Встретилось стоп слово: {stopword.stopword}'
+                                )
+                            raise GetOutOfLoop
                 if to_load == 1: plaintiff, respondent = respondent, plaintiff
                 case_ = Case(
                     plaintiff=plaintiff,
