@@ -24,7 +24,6 @@ def custom_index(request):
         form = SetupParseForm(request.POST)
         import ast
         select_data = ast.literal_eval(form.data['select'])
-        print(form.data['scan_r'])
         Tasks.objects.create(days_expire=form.data['time_delta'],
                              iteration_interval=form.data['interval'],
                              filter_id=select_data['filter_id'],
