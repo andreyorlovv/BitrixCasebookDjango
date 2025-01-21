@@ -10,25 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(
-            name='blacklist',
-            options={'verbose_name': 'Черный список', 'verbose_name_plural': 'Черный список'},
-        ),
-        migrations.AddField(
-            model_name='tasks',
-            name='cash',
-            field=models.IntegerField(blank=True, null=True),
-        ),
-        migrations.AddField(
-            model_name='tasks',
-            name='contacts',
-            field=models.IntegerField(blank=True, null=True),
-        ),
-        migrations.AddField(
-            model_name='tasks',
-            name='emails',
-            field=models.IntegerField(blank=True, null=True),
-        ),
         migrations.AddField(
             model_name='tasks',
             name='scan_p',
@@ -38,15 +19,5 @@ class Migration(migrations.Migration):
             model_name='tasks',
             name='scan_r',
             field=models.BooleanField(default=True),
-        ),
-        migrations.AddField(
-            model_name='tasks',
-            name='to_load',
-            field=models.IntegerField(blank=True, null=True),
-        ),
-        migrations.AlterField(
-            model_name='case',
-            name='case_id',
-            field=models.CharField(max_length=64, verbose_name='ID в CaseBook'),
-        ),
+        )
     ]
