@@ -23,8 +23,8 @@ class SetupParseForm(forms.Form):
     to_load = forms.ChoiceField(label='Кого загружать как клиента в Б24',
                                 choices={0: 'Ответчик', 1: 'Истец'}, required=True,
                                 initial=0, widget=forms.Select(attrs={'class': 'form-select', 'style': 'border-radius: 5px; padding: 5px'}))
-    scan_r = forms.BooleanField(label='Стоп слова по ответчикам', initial=True)
-    scan_p = forms.BooleanField(label='Стоп слова по истцам', initial=False)
+    scan_r = forms.BooleanField(label='Стоп слова по ответчикам', initial=True, required=False)
+    scan_p = forms.BooleanField(label='Стоп слова по истцам', initial=False, required=False)
     cash = forms.IntegerField(label='Сумма иска (от)', min_value=0, initial=300000, required=False)
     contacts = forms.IntegerField(label='Количество номеров к загрузке', min_value=0, initial=20)
     emails = forms.IntegerField(label='Количество email-ов к загрузке', min_value=0, initial=20)
