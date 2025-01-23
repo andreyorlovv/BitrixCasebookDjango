@@ -12,8 +12,9 @@ class CaseAdmin(admin.ModelAdmin):
     change_list_template = 'admin/casebook/Case/change_list.html'
 
     search_fields = ['case_id']
-    list_display = ('process_date', 'case_id', 'is_success', 'error_message')
-    readonly_fields = ['bitrix_lead_id', ]
+    list_filter = ['from_task']
+    list_display = ('process_date', 'case_id', 'is_success', 'error_message', 'from_task')
+    readonly_fields = ['bitrix_lead_id', 'from_task']
 
     def changelist_view(self, request, *args, **kwargs):
 

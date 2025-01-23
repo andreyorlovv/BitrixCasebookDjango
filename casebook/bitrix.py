@@ -4,6 +4,7 @@ from types import NoneType
 from fast_bitrix24 import Bitrix
 
 from .casebook import Case
+from .models import Filter
 
 courts = {
     'АС Алтайского края': '12606',
@@ -107,7 +108,7 @@ class BitrixConnect:
     def __init__(self, webhook='https://crm.yk-cfo.ru/rest/1690/eruxj0nx7ria5j0q/'):
         self.bitrix = Bitrix(webhook)
 
-    def create_lead(self, case: Case, rights):
+    def create_lead(self, case: Case, rights, filter_id):
         emails = []
         phones = []
 
@@ -118,6 +119,7 @@ class BitrixConnect:
                 case_id=case.number,
                 is_success=False,
                 error_message=f'Пустой инн (Для разработчиков -> {case.respondent.inn})',
+                from_task = Filter.objects.get(filter_id=filter_id)
             )
             return 'Except'
         for phone in case.contacts_info['numbers']:

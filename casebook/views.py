@@ -33,7 +33,7 @@ def custom_index(request):
                              emails=form.data['emails'],
                              last_execution=None,
                              scan_r=True if form.data.get('scan_r') == 'on' else False,
-                             scan_p=True if form.data.get('scan_r') == 'on' else False,
+                             scan_p=True if form.data.get('scan_p') == 'on' else False,
                              )
         get_tasks_from_db.apply_async()
     filters = Filter.objects.all()

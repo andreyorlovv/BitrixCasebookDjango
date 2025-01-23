@@ -76,7 +76,7 @@ def scan_enchanted(task_id):
     filter_ = Filter.objects.filter(filter_id=task.filter_id).first()
     cases = casebook.get_cases(filter_source=json.loads(filter_.value),
                                timedelta=task.days_expire, to_load=task.to_load, cash=task.cash,
-                               scan_p=task.scan_p, scan_r=task.scan_r)
+                               scan_p=task.scan_p, scan_r=task.scan_r, filter_id=task.filter_id)
     print('Cases get: ', str(len(cases)))
     if cases:
         for case in cases:
@@ -105,39 +105,42 @@ def scan_enchanted(task_id):
                 if not Case.objects.filter(case_id=case.number).exists():
                     try:
                         if task.filter_id == '558875':
-                            result = bitrix.create_lead(case, rights=True) if not Case.objects.filter(
+                            result = bitrix.create_lead(case, rights=True, filter_id=task.filter_id) if not Case.objects.filter(
                                 case_id=case.number).exists() else print("Уже есть: ", case.number)
                         elif task.filter_id == '515745':
-                            result = bitrix.create_lead(case, rights=1169) if not Case.objects.filter(
+                            result = bitrix.create_lead(case, rights=1169, filter_id=task.filter_id) if not Case.objects.filter(
                                 case_id=case.number).exists() else print("Уже есть: ", case.number)
     
                         elif task.filter_id == '677492':
-                            result = bitrix.create_lead(case, rights=1164) if not Case.objects.filter(
+                            result = bitrix.create_lead(case, rights=1164, filter_id=task.filter_id) if not Case.objects.filter(
                                 case_id=case.number).exists() else print("Уже есть: ", case.number)
                         else:
-                            result = bitrix.create_lead(case, rights=False) if not Case.objects.filter(
+                            result = bitrix.create_lead(case, rights=False, filter_id=task.filter_id) if not Case.objects.filter(
                                 case_id=case.number).exists() else print("Уже есть: ", case.number)
                         print(result)
                         print(type(result))
                         Case.objects.create(
-                            process_date=datetime.datetime.now().date(),
+                            process_date=datetime.datetime.now(),
                             case_id=case.number,
                             is_success=True,
-                            bitrix_lead_id=result
+                            bitrix_lead_id=result,
+                            from_task=Filter.objects.get(filter_id=task.filter_id),
                         )
                     except ErrorInServerResponseException as e:
                         Case.objects.create(
-                            process_date=datetime.datetime.now().date(),
+                            process_date=datetime.datetime.now(),
                             case_id=case.number,
                             is_success=False,
-                            error_message=f'Ошибка в контактных данных  {case.contacts_info} ||| {e}'
+                            error_message=f'Ошибка в контактных данных  {case.contacts_info} ||| {e}',
+                            from_task=Filter.objects.get(filter_id=task.filter_id),
                         )
             except Exception as e:
                 Case.objects.create(
-                    process_date=datetime.datetime.now().date(),
+                    process_date=datetime.datetime.now(),
                     case_id=case.number,
                     is_success=False,
-                    error_message=f'{e}'
+                    error_message=f'{e}',
+                    from_task=Filter.objects.get(filter_id=task.filter_id),
                 )
     task.last_execution = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
     task.save()

@@ -6,7 +6,7 @@ import json
 import urllib3
 
 from casebook import models
-from casebook.models import StopList, BlackList
+from casebook.models import StopList, BlackList, Filter
 from casebook.models import Case as CaseModel
 
 
@@ -123,7 +123,7 @@ class Casebook:
         except json.decoder.JSONDecodeError:
             self.headless_auth()
         
-    def get_cases(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True):
+    def get_cases(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True, filter_id=None):
         import ast
         serialized = None
         i = 0
@@ -178,10 +178,11 @@ class Casebook:
                 if case['claimSum'] < cash and case['claimSum'] != 0.0 and not CaseModel.objects.filter(case_id=case['caseNumber']).exists():
                     import casebook
                     models.Case.objects.create(
-                        process_date=datetime.datetime.now().date(),
+                        process_date=datetime.datetime.now(),
                         case_id=case['caseNumber'],
                         is_success=False,
-                        error_message=f'Сумма дела меньше целевой: {cash} > {case["claimSum"]}'
+                        error_message=f'Сумма дела меньше целевой: {cash} > {case["claimSum"]}',
+                        from_task=Filter.objects.get(filter_id=filter_id),
                     )
             if len(case['sides']) > 2:
                 _respondent = 0
@@ -200,10 +201,11 @@ class Casebook:
                     if _respondent > 1:
                         import casebook
                         models.Case.objects.create(
-                            process_date=datetime.datetime.now().date(),
+                            process_date=datetime.datetime.now(),
                             case_id=case['caseNumber'],
                             is_success=False,
-                            error_message='больше одного ответчика, отфильтровано'
+                            error_message='больше одного ответчика, отфильтровано',
+                            from_task=Filter.objects.get(filter_id=filter_id)
                         )
                         cases.remove(case)
                 except Exception as e:
@@ -241,10 +243,11 @@ class Casebook:
                             else: pass
                         except BlackListException as e:
                             models.Case.objects.create(
-                                process_date=datetime.datetime.now().date(),
+                                process_date=datetime.datetime.now(),
                                 case_id=case['caseNumber'],
                                 is_success=False,
-                                error_message=f'Ошибка: {e}'
+                                error_message=f'Ошибка: {e}',
+                                from_task=Filter.objects.get(filter_id=filter_id)
                             )
                         if side['inn'] in company_black_list:
                             raise BlackListException(f"{side['inn']} в черном списке")
@@ -254,10 +257,11 @@ class Casebook:
                         for stopword in stoplist:
                             if stopword.stopword.upper() in side['name'].upper():
                                 models.Case.objects.create(
-                                    process_date=datetime.datetime.now().date(),
+                                    process_date=datetime.datetime.now(),
                                     case_id=case['caseNumber'],
                                     is_success=False,
-                                    error_message=f'Встретилось стоп слово: {stopword.stopword}'
+                                    error_message=f'Встретилось стоп слово: {stopword.stopword}',
+                                    from_task=Filter.objects.get(filter_id=filter_id)
                                 )
                                 raise GetOutOfLoop
                     if plaintiff and scan_p:
@@ -265,10 +269,11 @@ class Casebook:
                         for stopword in stoplist:
                             if stopword.stopword.upper() in side['name'].upper():
                                 models.Case.objects.create(
-                                    process_date=datetime.datetime.now().date(),
+                                    process_date=datetime.datetime.now(),
                                     case_id=case['caseNumber'],
                                     is_success=False,
-                                    error_message=f'Встретилось стоп слово: {stopword.stopword}'
+                                    error_message=f'Встретилось стоп слово: {stopword.stopword}',
+                                    from_task = Filter.objects.get(filter_id=filter_id)
                                 )
                             raise GetOutOfLoop
                 if to_load == 1: plaintiff, respondent = respondent, plaintiff
@@ -291,14 +296,16 @@ class Casebook:
                     process_date=datetime.datetime.now().date(),
                     case_id=case['caseNumber'],
                     is_success=False,
-                    error_message=f'Ошибка: {case}'
+                    error_message=f'Ошибка: {case}',
+                    from_task=Filter.objects.get(filter_id=filter_id)
                 )
             except BlackListException as e:
                 models.Case.objects.create(
                     process_date=datetime.datetime.now().date(),
                     case_id=case['caseNumber'],
                     is_success=False,
-                    error_message=f'Ошибка: {e}'
+                    error_message=f'Ошибка: {e}',
+                    from_task = Filter.objects.get(filter_id=filter_id)
                 )
             except GetOutOfLoop:
                 pass
