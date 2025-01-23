@@ -41,23 +41,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='tasks',
-            name='scan_p',
-            field=models.BooleanField(default=False),
-        ),
-        migrations.AddField(
-            model_name='tasks',
-            name='scan_r',
-            field=models.BooleanField(default=False),
-        ),
-        migrations.AddField(
-            model_name='tasks',
             name='to_load',
             field=models.IntegerField(blank=True, null=True),
-        ),
-        migrations.AlterField(
-            model_name='case',
-            name='case_id',
-            field=models.CharField(max_length=64, verbose_name='ID в CaseBook'),
         ),
         migrations.AlterField(
             model_name='case',
