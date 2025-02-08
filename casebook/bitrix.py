@@ -195,12 +195,12 @@ class BitrixConnect:
                 "UF_CRM_1703235529": UF_CRM_1703235529,
                 "UF_CRM_1703234971": UF_CRM_1703234971,
                 "UF_CRM_1707995533": case.respondent.inn,
-                "ASSIGNED_BY_ID": 9
+                "ASSIGNED_BY_ID": 1690
             }}
 
-        result = '' # self.bitrix.call('crm.lead.add',
-                    #              items=items)
-        print(items)
+        result = self.bitrix.call('crm.lead.add',
+                               items=items)
+
 
         return result
 

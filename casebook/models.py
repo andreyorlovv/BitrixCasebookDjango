@@ -1,3 +1,5 @@
+from email.policy import default
+
 from django.db import models
 
 
@@ -47,6 +49,9 @@ class Tasks(models.Model):
     cash = models.IntegerField(blank=True, null=True, verbose_name='Минимальная сумма')
     scan_p = models.BooleanField(default=False, verbose_name='Применять стоп-слова на истцов')
     scan_r = models.BooleanField(default=False, verbose_name='Применять стоп-слова на ответчиков')
+    regex_p = models.CharField(default=None, null=True, verbose_name='Регулярное выражение для истцов (в разработке)')
+    regex_r = models.CharField(default=None, null=True, verbose_name='Регулярное выражение для ответчиков (в разработке)')
+    ignore_other_tasks_processed = models.BooleanField(default=False, verbose_name='Игнорировать кейсы обработки других подборок')
     contacts = models.IntegerField(blank=True, null=True, verbose_name='Кол-во телефонов')
     emails = models.IntegerField(blank=True, null=True, verbose_name='Кол-во email')
 
