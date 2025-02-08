@@ -84,11 +84,11 @@ def download_xlsx_view(request):
     for item in queryset:
         worksheet.write(row, col, item.id)
         worksheet.write(row, col + 1, item.case_id)
-        worksheet.write(row, col + 2, item.process_date.strftime('%m/%d/%Y'))
+        worksheet.write(row, col + 2, item.process_date.strftime('%d.%m.%Y'))
         worksheet.write(row, col + 3, 'Да' if item.is_success else 'Нет')
         worksheet.write(row, col + 4, item.error_message)
         worksheet.write(row, col + 5, item.from_task.name)
-        worksheet.write(row, col + 6, f'https://crm.yk-cfo.ru/crm/lead/details/{item.bitrix_lead_id}')
+        worksheet.write(row, col + 6, f'https://crm.yk-cfo.ru/crm/lead/details/{item.bitrix_lead_id}' if item.bitrix_lead_id else 'Не загружено')
         row += 1
     workbook.close()
 
