@@ -23,7 +23,7 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
             cd /home/docker/BitrixCasebookDjango/
-            docker compose down web 
+            docker compose stop web 
 
       - name: Backup DB
         uses: appleboy/ssh-action@v0.1.10
@@ -57,4 +57,4 @@ jobs:
           script: |
             cd /home/docker/BitrixCasebookDjango/
             git pull origin main
-            docker compose restart web
+            docker compose start web
