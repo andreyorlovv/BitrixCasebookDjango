@@ -49,6 +49,7 @@ class Tasks(models.Model):
     cash = models.IntegerField(blank=True, null=True, verbose_name='Минимальная сумма')
     scan_p = models.BooleanField(default=False, verbose_name='Применять стоп-слова на истцов')
     scan_r = models.BooleanField(default=False, verbose_name='Применять стоп-слова на ответчиков')
+    scan_or = models.BooleanField(default=False, verbose_name='Применять стоп-слова на поле `OtherRespondent`')
     regex_p = models.CharField(default=None, null=True, blank=True, verbose_name='Регулярное выражение для истцов (в разработке)')
     regex_r = models.CharField(default=None, null=True, blank=True, verbose_name='Регулярное выражение для ответчиков (в разработке)')
     ignore_other_tasks_processed = models.BooleanField(default=False, verbose_name='Игнорировать кейсы обработки других подборок')

@@ -123,7 +123,8 @@ class Casebook:
         except json.decoder.JSONDecodeError:
             self.headless_auth()
         
-    def get_cases(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True, filter_id=None):
+    def get_cases(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True, filter_id=None,
+                  scan_or=False):
         import ast
         serialized = None
         i = 0
@@ -252,7 +253,7 @@ class Casebook:
                         if side['inn'] in company_black_list:
                             raise BlackListException(f"{side['inn']} в черном списке")
                     # TODO: Вынести проверку и инверсию истца и ответика сюда, до прогона стоп-листа
-                    if respondent or side['nSideTypeEnum'] == 'OtherRespondent' and scan_r:
+                    if respondent and scan_r:
                         stoplist = StopList.objects.all()
                         for stopword in stoplist:
                             if stopword.stopword.upper() in side['name'].upper():
@@ -261,6 +262,18 @@ class Casebook:
                                     case_id=case['caseNumber'],
                                     is_success=False,
                                     error_message=f'Встретилось стоп слово: {stopword.stopword}',
+                                    from_task=Filter.objects.get(filter_id=filter_id)
+                                )
+                                raise GetOutOfLoop
+                    if side['nSideTypeEnum'] == 'OtherRespondent' and scan_or:
+                        stoplist = StopList.objects.all()
+                        for stopword in stoplist:
+                            if stopword.stopword.upper() in side['name'].upper():
+                                models.Case.objects.create(
+                                    process_date=datetime.datetime.now(),
+                                    case_id=case['caseNumber'],
+                                    is_success=False,
+                                    error_message=f'Встретилось стоп слово: {stopword.stopword}; type - OtherRespondent',
                                     from_task=Filter.objects.get(filter_id=filter_id)
                                 )
                                 raise GetOutOfLoop
