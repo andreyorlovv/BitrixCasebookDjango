@@ -1,9 +1,12 @@
 import dataclasses
 import datetime
+import os
+import sys
 import time
 import json
 
 import urllib3
+from django.conf import settings
 
 from casebook import models
 from casebook.models import StopList, BlackList, Filter
@@ -87,13 +90,13 @@ class Casebook:
 
             token_list = response_token.headers['set-cookie'].split(';')
             
-
+            token = None
 
             for line in token_list:
                 if '.AuthToken=' in line:
                     token = line.split('.AuthToken=')[1]
 
-            if token == None:
+            if token is None:
                 raise Exception('Не получили JWT токен от кейсбука')
 
             # token = response_token.headers['set-cookie'].split(';')[0].split('=')[1]
@@ -124,7 +127,7 @@ class Casebook:
             self.headless_auth()
         
     def get_cases(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True, filter_id=None,
-                  scan_or=False):
+                  scan_or=False, ignore_other_tasks_processed=False):
         import ast
         serialized = None
         i = 0
@@ -214,6 +217,8 @@ class Casebook:
         cases_to_process = []
         for case in cases:
             if not CaseModel.objects.filter(case_id=case['caseNumber']).exists():
+                cases_to_process.append(case)
+            elif ignore_other_tasks_processed and not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__filter_id=filter_id).exists():
                 cases_to_process.append(case)
             else:
                 pass
@@ -326,7 +331,11 @@ class Casebook:
 
 
 if __name__ == '__main__':
-    CASEBOOK_LOGIN = 'director@yk-cfo.ru'
-    CASEBOOK_PASSWORD = 'ykcfo3132'
-    casebook_api = Casebook(CASEBOOK_LOGIN, CASEBOOK_PASSWORD)
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BitrixCasebook.settings')
+
+    login = os.environ.get('CASEBOOK_LOGIN')
+    password = os.environ.get('CASEBOOK_PASSWORD')
+
+    casebook_api = Casebook(login, password)
+
     print(casebook_api.get_filters())

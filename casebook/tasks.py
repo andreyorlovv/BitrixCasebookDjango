@@ -22,12 +22,6 @@ def get_tasks_from_db():
             scan_enchanted.apply_async(args=[task.id], retry=False, expires=600)
 
 
-# @shared_task
-# def set_task_for_interval(id_, interval):
-#     next_iter = datetime.datetime.now() + datetime.timedelta(minutes=interval)
-#     scan_enchanted.apply_async(args=[id_], eta=next_iter)
-
-
 @shared_task
 def update_filters():
     from casebook.casebook import Casebook
@@ -66,8 +60,8 @@ def delete_lead(lead_id):
 def scan_enchanted(task_id):
     from casebook.casebook import Casebook
     #try:
-    casebook = Casebook('director@yk-cfo.ru', 'c-ase2566')
-    casebook.headless_auth('director@yk-cfo.ru', 'c-ase2566')
+    casebook = Casebook(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
+    casebook.headless_auth(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
     #except Exception as e:
     #    scan_enchanted.apply_async(args=[task_id], countdown=60)
     bitrix = BitrixConnect(webhook=settings.BITRIX_CALLBACK)
@@ -76,7 +70,8 @@ def scan_enchanted(task_id):
     filter_ = Filter.objects.filter(filter_id=task.filter_id).first()
     cases = casebook.get_cases(filter_source=json.loads(filter_.value),
                                timedelta=task.days_expire, to_load=task.to_load, cash=task.cash,
-                               scan_p=task.scan_p, scan_r=task.scan_r, filter_id=task.filter_id, scan_or=task.scan_or)
+                               scan_p=task.scan_p, scan_r=task.scan_r, filter_id=task.filter_id, scan_or=task.scan_or,
+                               ignore_other_tasks_processed=task.ignore_other_tasks_processed)
     print('Cases get: ', str(len(cases)))
     if cases:
         for case in cases:
@@ -150,108 +145,6 @@ def scan_enchanted(task_id):
         retry=False,
         expires=600
     )
-
-# @shared_task
-# def scan(task_id):
-#     from casebook.casebook import Casebook
-#     try:
-#         casebook = Casebook(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
-#         casebook.headless_auth()
-#     except Exception as e:
-#         scan.apply_async(args=[task_id], countdown=60)
-#
-#     bitrix = BitrixConnect(webhook=settings.BITRIX_CALLBACK)
-#
-#     task = Tasks.objects.get(id=task_id)
-#     filter_ = Filter.objects.filter(filter_id=task.filter_id).first()
-#     cases = casebook.get_cases(json.loads(filter_.value), task.days_expire)
-#
-#     print('Cases get: ', str(len(cases)))
-#
-#     if cases:
-#         processed_cases = []
-#         for case in cases:
-#             try:
-#                 print(case.number)
-#                 if not Case.objects.filter(case_id=str(case.number)).exists():
-#                     if 'индивидуальный предприниматель'.upper() in case.respondent.name.upper():
-#                         case.contacts_info = get_contacts_via_export_base(
-#                             ogrn=case.respondent.ogrn,
-#                             key=settings.EXPORT_BASE_API_KEY)
-#                     else:
-#                         case.contacts_info = get_contacts(inn=case.respondent.inn, ogrn=case.respondent.ogrn)
-#                     processed_cases.append(case)
-#             except Exception as e:
-#                 Case.objects.create(
-#                     process_date=datetime.datetime.now().date(),
-#                     case_id=case.number,
-#                     is_success=False,
-#                     error_message=f'{e}'
-#                 )
-#                 pass
-#         cases = processed_cases
-#         print('Processed Cases: ', str(len(cases)))
-#         with_contacts = []
-#         for case in cases:
-#             try:
-#                 if case.contacts_info.get('emails') == [] and case.contacts_info.get('numbers') == []:
-#                     case.contacts_info = get_contacts_via_export_base(
-#                         ogrn=case.respondent.ogrn,
-#                         key=settings.EXPORT_BASE_API_KEY)
-#             #     if case.contacts_info.get('emails') == [] and case.contacts_info.get('numbers') == []:
-#             #         Case.objects.create(
-#             #             process_date=datetime.datetime.now().date(),
-#             #             case_id=case.number,
-#             #             is_success=False,
-#             #             error_message=f'Не найдены контактные данные:  {case.contacts_info}'
-#             #         )
-#             #     else:
-#             #         with_contacts.append(case)
-#             except Exception as e:
-#                 Case.objects.create(
-#                     process_date=datetime.datetime.now().date(),
-#                     case_id=case.number,
-#                     is_success=False,
-#                     error_message=f'{e}'
-#                 )
-#                 pass
-#         # cases = with_contacts
-#         print('Load to b24')
-#         for case in cases:
-#             print(case.contacts_info)
-#         for case in cases:
-#             if not Case.objects.filter(case_id=case.number).exists():
-#                 try:
-#                     if task.filter_id == '558875':
-#                         err = bitrix.create_lead(case, rights=True) if not Case.objects.filter(
-#                             case_id=case.number).exists() else print("Уже есть: ", case.number)
-#                     else:
-#                         err = bitrix.create_lead(case, rights=False) if not Case.objects.filter(
-#                             case_id=case.number).exists() else print("Уже есть: ", case.number)
-#                     if err:
-#                         print(err)
-#                     Case.objects.create(
-#                         process_date=datetime.datetime.now().date(),
-#                         case_id=case.number,
-#                         is_success=True
-#                     )
-#                 except ErrorInServerResponseException as e:
-#                     Case.objects.create(
-#                         process_date=datetime.datetime.now().date(),
-#                         case_id=case.number,
-#                         is_success=False,
-#                         error_message=f'Ошибка в контактных данных  {case.contacts_info}'
-#                     )
-#             else:
-#                 pass
-#     task.last_execution = datetime.datetime.now().isoformat()
-#     task.save()
-#     scan.apply_async(
-#         args=[task.id],
-#         eta=(datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(minutes=task.iteration_interval)),
-#         retry=False,
-#         expires=600
-#     )
 
 
 @shared_task

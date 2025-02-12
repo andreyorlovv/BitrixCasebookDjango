@@ -6,12 +6,10 @@ services:
     restart: always
     command: bash -c "
       python manage.py migrate
-      && python manage.py loaddata stoplist.json
       && supervisord -n
       "
-    environment:
-      POSTGRES_HOST: db
-      REDIS_HOST: redis
+    env_file:
+      - .env
     volumes:
       - .:/code
     expose:
