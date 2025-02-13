@@ -105,7 +105,7 @@ DATABASES = {
         'NAME': 'bitrix_casebook_prod',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+        'HOST': os.getenv('POSTGRES_HOST', 'db'),
         'PORT': '5432',
     }
 }
