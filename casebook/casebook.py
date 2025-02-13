@@ -127,7 +127,7 @@ class Casebook:
             self.headless_auth()
         
     def get_cases(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True, filter_id=None,
-                  scan_or=False, ignore_other_tasks_processed=False):
+                  scan_or=False, ignore_other_tasks_processed=False, task_id=None):
         import ast
         serialized = None
         i = 0
@@ -218,7 +218,7 @@ class Casebook:
         for case in cases:
             if not CaseModel.objects.filter(case_id=case['caseNumber']).exists():
                 cases_to_process.append(case)
-            elif ignore_other_tasks_processed and not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__filter_id=filter_id).exists():
+            elif ignore_other_tasks_processed and not CaseModel.objects.filter(case_id=case['caseNumber'], from_task=task_id).exists():
                 cases_to_process.append(case)
             else:
                 pass

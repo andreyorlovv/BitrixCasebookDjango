@@ -71,7 +71,7 @@ def scan_enchanted(task_id):
     cases = casebook.get_cases(filter_source=json.loads(filter_.value),
                                timedelta=task.days_expire, to_load=task.to_load, cash=task.cash,
                                scan_p=task.scan_p, scan_r=task.scan_r, filter_id=task.filter_id, scan_or=task.scan_or,
-                               ignore_other_tasks_processed=task.ignore_other_tasks_processed)
+                               ignore_other_tasks_processed=task.ignore_other_tasks_processed, task_id=task_id)
     print('Cases get: ', str(len(cases)))
     if cases:
         for case in cases:
