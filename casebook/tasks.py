@@ -101,17 +101,17 @@ def scan_enchanted(task_id):
                     try:
                         if task.filter_id == '558875':
                             result = bitrix.create_lead(case, rights=True, filter_id=task.filter_id) if not Case.objects.filter(
-                                case_id=case.number).exists() else print("Уже есть: ", case.number)
+                                case_id=case.number).exists() or not Case.objects.filter(case_id=case.number, from_task=task_id) else print("Уже есть: ", case.number)
                         elif task.filter_id == '515745':
                             result = bitrix.create_lead(case, rights=1169, filter_id=task.filter_id) if not Case.objects.filter(
-                                case_id=case.number).exists() else print("Уже есть: ", case.number)
+                                case_id=case.number).exists() or (not Case.objects.filter(case_id=case.number, from_task=task_id) and task.ignore_other_tasks_processed) else print("Уже есть: ", case.number)
     
                         elif task.filter_id == '677492':
                             result = bitrix.create_lead(case, rights=1164, filter_id=task.filter_id) if not Case.objects.filter(
-                                case_id=case.number).exists() else print("Уже есть: ", case.number)
+                                case_id=case.number).exists() or (not Case.objects.filter(case_id=case.number, from_task=task_id) and task.ignore_other_tasks_processed) else print("Уже есть: ", case.number)
                         else:
                             result = bitrix.create_lead(case, rights=False, filter_id=task.filter_id) if not Case.objects.filter(
-                                case_id=case.number).exists() else print("Уже есть: ", case.number)
+                                case_id=case.number).exists() or (not Case.objects.filter(case_id=case.number, from_task=task_id) and task.ignore_other_tasks_processed) else print("Уже есть: ", case.number)
                         print(result)
                         print(type(result))
                         Case.objects.create(
