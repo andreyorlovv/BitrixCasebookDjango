@@ -56,5 +56,5 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
             cd /home/docker/BitrixCasebookDjango/
-            git pull origin main
+            git pull
             docker compose start web
