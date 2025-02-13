@@ -43,8 +43,8 @@ EXPORT_BASE_API_KEY = os.getenv('EXPORT_BASE_API_KEY')
 CELERY_TIMEZONE = "Europe/Moscow"
 CELERY_TASK_TRACK_STARTED = True
 
-CELERY_BROKER_URL = f"redis://{os.getenv('REDIS_HOST', 'localhost')}:6379"
-CELERY_RESULT_BACKEND = f"redis://{os.getenv('REDIS_HOST', 'localhost')}:6379"
+CELERY_BROKER_URL = f"redis://{os.getenv('REDIS_HOST', 'redis')}:6379"
+CELERY_RESULT_BACKEND = f"redis://{os.getenv('REDIS_HOST', 'redis')}:6379"
 
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
