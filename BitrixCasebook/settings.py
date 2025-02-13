@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from os import environ
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = environ.get('DJANGO_SECRET_KEY')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -28,20 +31,20 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['http://localhost', 'http://185.101.27.108:81', 'http://localhost:81', 'http://*']
 
-BITRIX_CALLBACK = environ.get('BITRIX_CALLBACK')
+BITRIX_CALLBACK = os.getenv('BITRIX_CALLBACK')
 
-CASEBOOK_LOGIN = environ.get('CASEBOOK_LOGIN')
-CASEBOOK_PASSWORD = environ.get('CASEBOOK_PASSWORD')
+CASEBOOK_LOGIN = os.getenv('CASEBOOK_LOGIN')
+CASEBOOK_PASSWORD = os.getenv('CASEBOOK_PASSWORD')
 
-EXPORT_BASE_API_KEY = environ.get('EXPORT_BASE_API_KEY')
+EXPORT_BASE_API_KEY = os.getenv('EXPORT_BASE_API_KEY')
 
 # Application definition
 
 CELERY_TIMEZONE = "Europe/Moscow"
 CELERY_TASK_TRACK_STARTED = True
 
-CELERY_BROKER_URL = f"redis://{os.environ.get('REDIS_HOST', 'localhost')}:6379"
-CELERY_RESULT_BACKEND = f"redis://{os.environ.get('REDIS_HOST', 'localhost')}:6379"
+CELERY_BROKER_URL = f"redis://{os.getenv('REDIS_HOST', 'localhost')}:6379"
+CELERY_RESULT_BACKEND = f"redis://{os.getenv('REDIS_HOST', 'localhost')}:6379"
 
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 

@@ -218,7 +218,7 @@ class Casebook:
         for case in cases:
             if not CaseModel.objects.filter(case_id=case['caseNumber']).exists():
                 cases_to_process.append(case)
-            elif ignore_other_tasks_processed and not CaseModel.objects.filter(case_id=case['caseNumber'], from_task_id=task_id).exists():
+            elif ignore_other_tasks_processed and not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists():
                 cases_to_process.append(case)
             else:
                 pass
