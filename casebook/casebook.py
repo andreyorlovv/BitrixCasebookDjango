@@ -179,7 +179,7 @@ class Casebook:
                 cases.append(case)
         for case in cases:
             if cash:
-                if case['claimSum'] < cash and case['claimSum'] != 0.0 and not CaseModel.objects.filter(case_id=case['caseNumber']).exists():
+                if case['claimSum'] < cash and case['claimSum'] != 0.0 and not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists():
                     import casebook
                     models.Case.objects.create(
                         process_date=datetime.datetime.now(),
@@ -218,10 +218,9 @@ class Casebook:
         for case in cases:
             if not CaseModel.objects.filter(case_id=case['caseNumber']).exists():
                 cases_to_process.append(case)
-            elif ignore_other_tasks_processed and not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists():
-                cases_to_process.append(case)
             else:
-                pass
+                if not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists() and ignore_other_tasks_processed:
+                    cases_to_process.append(case)
         cases = cases_to_process
         company_black_list = BlackList.objects.filter(type='inn')
         for case in cases:
