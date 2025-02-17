@@ -77,7 +77,7 @@ def scan_enchanted(task_id):
         for case in cases:
             print(case.number)
             try:
-                if not Case.objects.filter(case_id=str(case.number)).exists():
+                if not Case.objects.filter(case_id=str(case.number)).exists() or (not Case.objects.filter(case_id=case.number, from_task__id=filter_.id).exists() and task.ignore_other_tasks_processed):
                     if 'индивидуальный предприниматель'.upper() in case.respondent.name.upper():
                         try:
                             case.contacts_info = {'emails': [], 'numbers': []}
