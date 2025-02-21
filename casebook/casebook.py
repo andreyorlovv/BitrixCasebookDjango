@@ -218,8 +218,7 @@ class Casebook:
         for case in cases:
             if not CaseModel.objects.filter(case_id=case['caseNumber']).exists():
                 cases_to_process.append(case)
-            else:
-                if not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists() and ignore_other_tasks_processed:
+            elif not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists() and ignore_other_tasks_processed:
                     cases_to_process.append(case)
         cases = cases_to_process
         company_black_list = BlackList.objects.filter(type='inn')
@@ -291,7 +290,7 @@ class Casebook:
                                     error_message=f'Встретилось стоп слово: {stopword.stopword}',
                                     from_task = Filter.objects.get(filter_id=filter_id)
                                 )
-                            raise GetOutOfLoop
+                                raise GetOutOfLoop
                 if to_load == 1: plaintiff, respondent = respondent, plaintiff
                 case_ = Case(
                     plaintiff=plaintiff,
