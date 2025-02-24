@@ -258,7 +258,7 @@ class Casebook:
                     if respondent and scan_r:
                         stoplist = StopList.objects.all()
                         for stopword in stoplist:
-                            if stopword.stopword.upper() in plaintiff.name.upper():
+                            if stopword.stopword.upper() in respondent.name.upper():
                                 models.Case.objects.create(
                                     process_date=datetime.datetime.now(),
                                     case_id=case['caseNumber'],
