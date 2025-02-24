@@ -81,17 +81,19 @@ def scan_enchanted(task_id):
                     if 'индивидуальный предприниматель'.upper() in case.respondent.name.upper():
                         try:
                             case.contacts_info = {'emails': [], 'numbers': []}
-                            case.contacts_info = get_contacts_via_export_base(ogrn=case.respondent.ogrn,
+                            case.contacts_info = get_contacts_via_export_base(ogrn=case.respondent.ogrn if task.to_load==0 else case.plaintiff.ogrn,
                                                                               key=settings.EXPORT_BASE_API_KEY)
                         except Exception as e:
                             case.contacts_info = {'emails': [], 'numbers': []}
-                            case.contacts_info = get_contacts(inn=case.respondent.inn, ogrn=case.respondent.ogrn)
+                            case.contacts_info = get_contacts(inn=case.respondent.inn if task.to_load==0 else case.plaintiff.inn,
+                                                              ogrn=case.respondent.ogrn if task.to_load==0 else case.plaintiff.ogrn)
                     else:
                         case.contacts_info = {'emails': [], 'numbers': []}
-                        case.contacts_info = get_contacts(inn=case.respondent.inn, ogrn=case.respondent.ogrn)
+                        case.contacts_info = get_contacts(inn=case.respondent.inn if task.to_load==0 else case.plaintiff.inn,
+                                                          ogrn=case.respondent.ogrn if task.to_load==0 else case.plaintiff.ogrn)
                 if case.contacts_info.get('emails') == [] and case.contacts_info.get('numbers') == []:
                     case.contacts_info = {'emails': [], 'numbers': []}
-                    case.contacts_info = get_contacts_via_export_base(ogrn=case.respondent.ogrn,
+                    case.contacts_info = get_contacts_via_export_base(ogrn=case.respondent.ogrn if task.to_load==0 else case.plaintiff.ogrn,
                                                                       key=settings.EXPORT_BASE_API_KEY)
                 if case.contacts_info['numbers'] and task.contacts:
                     case.contacts_info['numbers'] = case.contacts_info['numbers'][0:task.contacts]
