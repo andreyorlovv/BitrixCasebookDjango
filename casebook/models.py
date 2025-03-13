@@ -70,7 +70,8 @@ class BlackList(models.Model):
                             choices=[
                                 ('inn', 'Организация'),
                                 ('email', 'эл.почта'),
-                                ('phone', 'Номер телефона')
+                                ('phone', 'Номер телефона'),
+                                ('email_mask', 'Домен эл.почты')
                             ])
 
     def __str__(self):
