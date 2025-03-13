@@ -65,7 +65,13 @@ class Tasks(models.Model):
 
 
 class BlackList(models.Model):
-    value = models.CharField(max_length=255, verbose_name='Значение')
+    value = models.CharField(max_length=255, verbose_name='Значение', help_text='В случае с `Доменом электронной почты` - '
+                                                                                'работает концепция как со стоп-словами - '
+                                                                                'поиск подстроки в строке. ПРИМЕР - блокирует '
+                                                                                'все электронки на определенном домене, например, '
+                                                                                'в случае с mvideo: "<something>@mvideo.ru", при этом вместо'
+                                                                                'something - может быть любой текст, то есть ключевое здесь домен'
+                                                                                '`mvideo.ru` или `@mvideo.ru`')
     type = models.CharField(max_length=32, verbose_name="Тип",
                             choices=[
                                 ('inn', 'Организация'),
