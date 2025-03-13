@@ -2,3 +2,8 @@
 BitrixCasebook/__pycache__/
 casebook/__pycache__/
 casebook/migrations/__pycache__/
+celery.log
+celerybeat.log
+contacts.sqlite
+supervisord.log
+gunicorn.log
