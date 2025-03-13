@@ -163,7 +163,7 @@ def get_contacts(inn, ogrn):
 
     result_email = []
     for email in email_list:
-        if not BlackList.objects.filter(value=email).exists():
+        if not BlackList.objects.filter(value=email).exists() and not BlackList.objects.filter(type='email_mask', value__contains=email.split('@')[1]).exists():
             result_email.append(email)
     
             
