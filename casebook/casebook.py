@@ -179,7 +179,7 @@ class Casebook:
                 cases.append(case)
         for case in cases:
             if cash:
-                if case['claimSum'] < cash and case['claimSum'] != 0.0 and not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists():
+                if case['claimSum'] < cash and not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists():
                     import casebook
                     models.Case.objects.create(
                         process_date=datetime.datetime.now(),
