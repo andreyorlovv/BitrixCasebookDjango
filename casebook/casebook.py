@@ -179,7 +179,7 @@ class Casebook:
                 cases.append(case)
         for case in cases:
             if cash:
-                if case['claimSum'] < cash and not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists():
+                if case['claimSum'] <= cash and not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists():
                     import casebook
                     models.Case.objects.create(
                         process_date=datetime.datetime.now(),
@@ -291,10 +291,10 @@ class Casebook:
                                     from_task = Filter.objects.get(filter_id=filter_id)
                                 )
                                 raise GetOutOfLoop
-                if to_load == 1: plaintiff, respondent = respondent, plaintiff
+                # if to_load == 1: plaintiff, respondent = respondent, plaintiff
                 case_ = Case(
-                    plaintiff=plaintiff,
-                    respondent=respondent,
+                    plaintiff=plaintiff if to_load == 1 respondent,
+                    respondent=respondent if to_load == 1 plaintiff,
                     court=case['instancesInternal'][0]['court'],
                     url=f'https://casebook.ru/card/case/{case["caseId"]}',
                     number=case['caseNumber'],
