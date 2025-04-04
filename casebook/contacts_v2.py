@@ -159,29 +159,23 @@ def get_contacts(inn, ogrn):
         if not BlackList.objects.filter(value=number).exists():
             valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
             
-    print(f'(2) -> {valid_numbers} | {email_list}')
-
     result_email = []
     for email in email_list:
         if not BlackList.objects.filter(value=email).exists() and not BlackList.objects.filter(type='email_mask', value__contains=email.split('@')[1]).exists():
             result_email.append(email)
-    
             
-    print(f'(3) -> {valid_numbers} | {email_list}')
-
     result_numbers = list(set(valid_numbers))
     result_email = list(set(email_list))
 
-    print("Полученные контакты -", {'numbers': result_numbers,
-                                    'emails': result_email})
-    
     return {'numbers': result_numbers,
             'emails': result_email}
 
 
 def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
-    number_list = []
-    email_list = []
+    gc = get_contacts(inn, ogrn)
+    
+    number_list = gc.get('numbers')
+    email_list = gc.get('emails')
 
     if ogrn and inn:
         url = f'https://export-base.ru/api/company/?inn={inn}&ogrn={ogrn}&key={key}'
@@ -202,7 +196,7 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
 
     number_list += data['stationary_phone'].split(', +')
     number_list += data['mobile_phone'].split(', +')
-    
+
     valid_numbers = []
 
     for number in number_list:
@@ -211,6 +205,9 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
     number_list = valid_numbers
 
     email_list.append(data['email'].split(', ')[0])
+
+    # number_list = filter(None, number_list)
+    # email_list = filter(None, email_list)
 
     number_list = list(set(number_list))
     email_list = list(set(email_list))
@@ -227,8 +224,6 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         valid_numbers.append(number)
         if not BlackList.objects.filter(value=number).exists():
             valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
-
-    print(valid_numbers)
 
     result_email = []
     for email in email_list:
