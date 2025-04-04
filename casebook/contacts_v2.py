@@ -189,9 +189,7 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         url = f'https://export-base.ru/api/company/?ogrn={ogrn}&key={key}'
     elif inn:
         url = f'https://export-base.ru/api/company/?inn={inn}&key={key}'
-    else:
-        return {'numbers': number_list,
-                'emails': email_list}
+
     response = requests.get(url)
 
     result_data = json.loads(response.text)
@@ -201,20 +199,18 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         return get_contacts(ogrn=ogrn, inn=inn)
     except Exception as e:
         return get_contacts(ogrn=ogrn, inn=inn)
+
     number_list += data['stationary_phone'].split(', +')
     number_list += data['mobile_phone'].split(', +')
-
+    
     valid_numbers = []
 
     for number in number_list:
-        valid_numbers.append(number[:17])
+        valid_numbers.append(number[:18])
 
     number_list = valid_numbers
 
     email_list.append(data['email'].split(', ')[0])
-
-    number_list = filter(None, number_list)
-    email_list = filter(None, email_list)
 
     number_list = list(set(number_list))
     email_list = list(set(email_list))
@@ -222,13 +218,17 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
     valid_numbers = []
 
     for number in number_list:
+        if number == '': continue
         number = number.replace('+7', '7')
         number = number.replace(' ', '')
         number = number.replace('(', '')
         number = number.replace(')', '')
         number = number.replace('-', '')
+        valid_numbers.append(number)
         if not BlackList.objects.filter(value=number).exists():
             valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
+
+    print(valid_numbers)
 
     result_email = []
     for email in email_list:
@@ -237,7 +237,7 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
 
     print("Полученные контакты -", {'numbers': valid_numbers,
                                     'emails': result_email})
-    
+
     return {'numbers': valid_numbers,
             'emails': result_email}
 
