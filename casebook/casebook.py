@@ -291,10 +291,10 @@ class Casebook:
                                     from_task = Filter.objects.get(filter_id=filter_id)
                                 )
                                 raise GetOutOfLoop
-                # if to_load == 1: plaintiff, respondent = respondent, plaintiff
+                if to_load == 1: plaintiff, respondent = respondent, plaintiff
                 case_ = Case(
-                    plaintiff=plaintiff if to_load == 1 else respondent,
-                    respondent=respondent if to_load == 1 else plaintiff,
+                    plaintiff=plaintiff,
+                    respondent=respondent,
                     court=case['instancesInternal'][0]['court'],
                     url=f'https://casebook.ru/card/case/{case["caseId"]}',
                     number=case['caseNumber'],
