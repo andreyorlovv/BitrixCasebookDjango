@@ -22,6 +22,7 @@ class Side:
     name: str
     inn: str
     ogrn: str
+    address: str | None = None
 
 
 @dataclasses.dataclass
@@ -232,12 +233,14 @@ class Casebook:
                             name=side['name'],
                             inn=side['inn'],
                             ogrn=side['ogrn'],
+                            address=side['address'],
                         )
                     elif side['typeEnum'] == "Respondent":
                         respondent = Side(
                             name=side['name'],
                             inn=side['inn'],
                             ogrn=side['ogrn'],
+                            address=side['address'],
                         )
                     # Создание 2х сущностей, истец ответчик
                     if plaintiff:

@@ -155,7 +155,8 @@ class BitrixConnect:
                     "UF_CRM_1703235529": UF_CRM_1703235529,
                     "UF_CRM_1703234971": UF_CRM_1703234971,
                     "UF_CRM_1707995533": case.respondent.inn,
-                    "ASSIGNED_BY_ID": 1690
+                    "ASSIGNED_BY_ID": 1690,
+                    "ADDRESS": case.respondent.address,
                 }}
             else:
                 full_name = name.split(' ')
@@ -178,6 +179,7 @@ class BitrixConnect:
                     "LAST_NAME": full_name[0],
                     "NAME": full_name[1],
                     "SECOND_NAME": full_name[2],
+                    "ADDRESS": case.respondent.address,
                 }}
         else:
             items = {"fields": {
@@ -195,6 +197,7 @@ class BitrixConnect:
                 "UF_CRM_1703235529": UF_CRM_1703235529,
                 "UF_CRM_1703234971": UF_CRM_1703234971,
                 "UF_CRM_1707995533": case.respondent.inn,
+                "ADDRESS": case.respondent.address,
                 "ASSIGNED_BY_ID": 1690
             }}
 

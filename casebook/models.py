@@ -46,6 +46,7 @@ class Tasks(models.Model):
     filter_id = models.CharField(max_length=64, verbose_name='ID фильтра')
     last_execution = models.DateTimeField(blank=True, null=True, verbose_name='Последнее выполнение')
     to_load = models.IntegerField(blank=True, null=True, verbose_name='Кого загружать (0 - ответчик, 1 - истец)')
+    b24_collection = models.IntegerField(blank=True, null=True, verbose_name='Тип прав (id из битрикса)')
     cash = models.IntegerField(blank=True, null=True, verbose_name='Минимальная сумма')
     scan_p = models.BooleanField(default=False, verbose_name='Применять стоп-слова на истцов')
     scan_r = models.BooleanField(default=False, verbose_name='Применять стоп-слова на ответчиков')
