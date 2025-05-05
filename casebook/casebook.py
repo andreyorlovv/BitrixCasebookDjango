@@ -240,14 +240,14 @@ class Casebook:
                             name=side['name'],
                             inn=side['inn'],
                             ogrn=side['ogrn'],
-                            address=side['address'],
+                            address=address,
                         )
                     elif side['typeEnum'] == "Respondent":
                         respondent = Side(
                             name=side['name'],
                             inn=side['inn'],
                             ogrn=side['ogrn'],
-                            address=side['address'],
+                            address=address,
                         )
                     # Создание 2х сущностей, истец ответчик
                     if plaintiff:
