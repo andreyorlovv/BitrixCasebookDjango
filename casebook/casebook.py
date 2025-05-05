@@ -177,6 +177,7 @@ class Casebook:
             print(f"Статус запроса {page}-ой страницы - {response.status}")
             try:
                 serialized_page = json.loads(response.data)
+                print(response.data, ' ---||---', response.status)
             except Exception as e:
                 print(response.data)
                 print(e)
