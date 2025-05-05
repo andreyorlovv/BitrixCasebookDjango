@@ -234,10 +234,7 @@ class Casebook:
                 plaintiff = None
                 respondent = None
                 for side in case['sides']:
-                    if side.get('address'):
-                        address = side.get('address')
-                    else:
-                        address = 'Не передан адрес с кейсбука'
+                    address = side.get('address', 'Адрес не передан с кейсбука')
                     if side['typeEnum'] == "Plaintiff":
                         plaintiff = Side(
                             name=side['name'],
