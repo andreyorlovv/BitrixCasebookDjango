@@ -175,7 +175,9 @@ class Casebook:
                                                 .replace('False', 'false'),
                                                 headers=self.headers)
             print(f"Статус запроса {page}-ой страницы - {response.status}")
+        
             serialized_page = json.loads(response.data)
+            
             for case in serialized_page['result']['items']:
                 cases.append(case)
         for case in cases:
@@ -228,19 +230,20 @@ class Casebook:
                 plaintiff = None
                 respondent = None
                 for side in case['sides']:
+                    address = side.get('address', 'Адрес не передан с кейсбука')
                     if side['typeEnum'] == "Plaintiff":
                         plaintiff = Side(
                             name=side['name'],
                             inn=side['inn'],
                             ogrn=side['ogrn'],
-                            address=side['address'],
+                            address=address,
                         )
                     elif side['typeEnum'] == "Respondent":
                         respondent = Side(
                             name=side['name'],
                             inn=side['inn'],
                             ogrn=side['ogrn'],
-                            address=side['address'],
+                            address=address,
                         )
                     # Создание 2х сущностей, истец ответчик
                     if plaintiff:
