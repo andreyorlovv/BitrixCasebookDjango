@@ -1,6 +1,9 @@
 import datetime
 import json
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
+import requests
 from celery import shared_task
 from django.conf import settings
 from django.db.models import QuerySet
@@ -8,7 +11,7 @@ from fast_bitrix24.server_response import ErrorInServerResponseException
 
 from casebook.bitrix import BitrixConnect
 from casebook.contacts_v2 import get_contacts_via_export_base, get_contacts
-from casebook.models import Filter, Case, Tasks
+from casebook.models import Filter, Case, Tasks, InfoDealB24
 
 
 @shared_task
@@ -137,12 +140,61 @@ def scan_enchanted(task_id):
 
 @shared_task
 def daily_report():
-    queryset = Case.objects.filter(process_date=datetime.datetime.now(tz=datetime.timezone.utc))
-    report = f'''
-    Отчет о работе бота за {datetime.datetime.now().date} \n
-    Обработано кейсов:
-    - {queryset.count()} всего взято в обработку, из них
-    {queryset.filter(is_success=True).count()} признаны валидными и ушли в обработку.
+    import smtplib
+
+    remaining_export_base = requests.get(f'https://export-base.ru/api/balance/?key={settings.EXPORT_BASE_API_KEY}')
+
+    message = f'''
+    ВНИМАНИЕ! Заканчиваются токены export-base, текущий остаток - {remaining_export_base.text}
+    
+    Необходимо пополнить баланс.
     '''
-    pass
+    msg = MIMEMultipart()
+
+    password = "sjednvonplnzfgat"
+    msg['From'] = "druni.adler@yandex.ru"
+    msg['To'] = "druni.orlov@gmail.com"
+    msg['Subject'] = "Токены EXPORT-BASE.RU"
+
+    msg.attach(MIMEText(message, 'plain'))
+    server = smtplib.SMTP('smtp.yandex.ru: 587')
+    server.starttls()
+    server.login(msg['From'], password)
+    server.sendmail(msg['From'], msg['To'], msg.as_string())
+    server.quit()
+
+
+@shared_task
+def updates_info_about_case():
+    from casebook.casebook import Casebook
+    casebook = Casebook(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
+    bitrix = BitrixConnect(webhook=settings.BITRIX_CALLBACK)
+    deals = bitrix.get_cases({
+        '@STAGE_ID': ['C2:UC_WM14DA', 'C2:UC_UNGBSA', 'C2:NEW', 'C2:UC_UMRJ10', 'C2:PREPAYMENT_INVOICE']
+    })
+
+    for deal in deals:
+        try:
+            case = casebook.find_case(deal['UF_CRM_1599834564'])
+            instances = casebook.get_instances(case['id'])
+            for instance in instances:
+                if not InfoDealB24.objects.filter(instance_id=instance['instance_id']).exists():
+                    InfoDealB24.objects.create(
+                        b24_id=deal['ID'],
+                        case_id=instance['case_id'],
+                        instance_id=instance['instance_id'],
+                    )
+                events = casebook.get_history(instance['case_id'], instance['instance_id'])
+                if not InfoDealB24.objects.filter(last_record_id=events[0]['id']).exists():
+                    for event in reversed(events):
+                        if InfoDealB24.objects.filter(last_record_id=event['id']).first().date_casebook < datetime.datetime.fromisoformat(event['registrationDate']):
+                            bitrix.add_comment_case(deal['ID'], deal['UF_CRM_1599834564'],
+                                                    f' [Kad.Arbitr] {datetime.datetime.fromisoformat(event['registrationDate']).date()} - {event['type']} {event['contentTypes']['value']} \n\n'
+                                                    f'{f"https://casebook.ru/File/PdfDocument/{event['caseId']}/{event['id']}/{event['fileName']}" if event.get('fileName') else 'Нет файла'}')
+                            InfoDealB24.objects.filter(case_id=instance['case_id'], instance_id=instance['instance_id']).update(
+                                last_record_id=event['id'], date_casebook=datetime.datetime.fromisoformat(event['registrationDate'])
+                            )
+
+        except KeyError as e:
+            print(e)
 

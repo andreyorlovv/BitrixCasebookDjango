@@ -210,3 +210,20 @@ class BitrixConnect:
     def delete_lead(self, lead_id):
         self.bitrix.call('crm.lead.delete',
                          {'id': f'{lead_id}'})
+
+    def get_cases(self, filter_):
+        result = self.bitrix.get_all('crm.deal.list',
+                                     {'select': ['*', 'UF_*'],
+                                      'filter': {'CLOSED': 'N'} | filter_,
+                                      })
+        return result
+
+    def add_comment_case(self, id_, case_, comment):
+        result = self.bitrix.call('crm.timeline.comment.add',
+                                  {
+                                      'fields': {
+                                          'ENTITY_ID': id_,
+                                          'ENTITY_TYPE': 'deal',
+                                          'COMMENT': comment,
+                                      }
+                                  })

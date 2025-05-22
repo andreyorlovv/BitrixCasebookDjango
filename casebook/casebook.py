@@ -329,6 +329,88 @@ class Casebook:
                 pass
         return result
 
+    def find_case(self, case_number):
+        self.headless_auth()
+        response =self.http_client.request('GET', f'https://casebook.ru/ms/Search/Suggest/QuickSearch?query={urlparse(case_number)}')
+
+        result = json.loads(response.data.decode('utf-8'))
+
+        return result['items'][0]
+
+    def get_instances(self, id_):
+        self.headless_auth()
+
+        response = self.http_client.request('POST', 'https://casebook.ru/ms/CaseCard/api/v1/Instance/List',
+                                            body=f'''
+                                            {{
+                                                "caseId": "{id_}",
+                                                "eventFilter": {{
+                                                    "dateFilter": {{
+                                                        "dateFrom": null,
+                                                        "dateTo": null
+                                                    }},
+                                                    "authors": [],
+                                                    "eventTypes": [
+                                                        "AllDocuments",
+                                                        "PlannedSession"
+                                                    ],
+                                                    "textFilter": ""
+                                                }},
+                                                "page": 1,
+                                                "count": 100
+                                            }}''')
+
+        items = json.loads(response.data.decode('utf-8'))['items']
+
+        result = []
+
+        for item in items:
+            result.append(
+                {
+                    'case_id': item['caseId'],
+                    'instance_level': item['instanceLevel'],
+                    'instance_id': item['id'],
+                    'number': item['number'],
+                }
+            )
+
+        return result
+
+    def get_history(self, case_id, instance_id):
+        self.headless_auth()
+
+        response = self.http_client.request('POST', 'https://casebook.ru/ms/CaseCard/api/v1/Event/List', body=f'''
+                                                            {{
+                                                                "caseId": "{case_id}",
+                                                                "instanceId": "{instance_id}",
+                                                                "includeSeparateDisputeNumbers": false,
+                                                                "eventFilter": {{
+                                                                    "dateFilter": {{
+                                                                        "dateFrom": null,
+                                                                        "dateTo": null
+                                                                    }},
+                                                                    "authors": [],
+                                                                    "eventTypes": [
+                                                                        "AllDocuments"
+                                                                    ],
+                                                                    "textFilter": ""
+                                                                }},
+                                                                "paging": {{
+                                                                    "page": 1,
+                                                                    "count": 30
+                                                                }},
+                                                                "sort": [
+                                                                    {{
+                                                                        "field": "Date",
+                                                                        "order": "Descending",
+                                                                        "index": 0
+                                                                    }}
+                                                                ]
+                                                            }}
+                                                            ''')
+        serialized = json.loads(response.data.decode('utf-8'))['items']
+        return serialized
+
 
 if __name__ == '__main__':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BitrixCasebook.settings')
@@ -339,3 +421,17 @@ if __name__ == '__main__':
     casebook_api = Casebook(login, password)
 
     print(casebook_api.get_filters())
+
+    case = casebook_api.find_case('А29-5940/2025')
+    instances = casebook_api.get_instances(case['id'])
+    events = casebook_api.get_history(instances[0]['case_id'], instances[0]['instance_id'])
+    for event in events:
+        print(
+            event['courtName'],
+            event['type'],
+            event['contentTypes'],
+            event['registrationDate'],
+            f"https://casebook.ru/File/PdfDocument/{event['caseId']}/{event['id']}/{event['fileName']}" if event.get(
+                'fileName') else 'Нет файла',
+            sep=', '
+        )

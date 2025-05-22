@@ -21,6 +21,8 @@ class Case(models.Model):
     error_message = models.TextField(blank=True, null=True, verbose_name="Ошибка, если не успешно")
     bitrix_lead_id = models.CharField(blank=True, null=True, verbose_name="ID лида в Б24")
     from_task = models.ForeignKey("Filter", on_delete=models.CASCADE, blank=True, null=True, verbose_name='создано из подборки')
+    contacts = models.TextField(blank=True, null=True, verbose_name="Контакты")
+
 
     def __str__(self):
         return self.case_id
@@ -87,3 +89,11 @@ class BlackList(models.Model):
     class Meta:
         verbose_name = 'Черный список'
         verbose_name_plural = 'Черный список'
+
+
+class InfoDealB24(models.Model):
+    b24_id = models.IntegerField(null=True, blank=True)
+    case_id = models.CharField(max_length=255, null=True, blank=True)
+    instance_id = models.CharField(max_length=255, null=True, blank=True)
+    last_record_id = models.CharField(max_length=255, null=True, blank=True)
+    date_casebook = models.DateTimeField(null=True, blank=True)
