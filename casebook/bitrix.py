@@ -218,12 +218,23 @@ class BitrixConnect:
                                       })
         return result
 
-    def add_comment_case(self, id_, case_, comment):
+    def add_comment_case(self, deal, event):
+        id_ = deal['ID']
+
+        comment = f"[Kad.Arbitr] {datetime.datetime.fromisoformat(event['registrationDate']).date()} - {event['type']} - {event['contentTypes'][0]['value']} \n"
+        try:
+            comment += f"Заявитель: {event['reasonDocumentInfo']['declarers'][0]['shortName']}"
+        except KeyError as e:
+            pass
+        file = f'https://casebook.ru/File/PdfDocument/{event["caseId"]}/{event["id"]}/{event["fileName"]}' if event.get(
+            'fileName') else 'Нет файла'
+
         result = self.bitrix.call('crm.timeline.comment.add',
+                                  # print('crm.timeline.comment.add',
                                   {
                                       'fields': {
                                           'ENTITY_ID': id_,
                                           'ENTITY_TYPE': 'deal',
-                                          'COMMENT': comment,
+                                          'COMMENT': comment + ' \n ' + file,
                                       }
                                   })

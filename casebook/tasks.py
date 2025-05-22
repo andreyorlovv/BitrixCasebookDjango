@@ -188,9 +188,7 @@ def updates_info_about_case():
                 if not InfoDealB24.objects.filter(last_record_id=events[0]['id']).exists():
                     for event in reversed(events):
                         if InfoDealB24.objects.filter(last_record_id=event['id']).first().date_casebook < datetime.datetime.fromisoformat(event['registrationDate']):
-                            bitrix.add_comment_case(deal['ID'], deal['UF_CRM_1599834564'],
-                                                    f' [Kad.Arbitr] {datetime.datetime.fromisoformat(event['registrationDate']).date()} - {event['type']} {event['contentTypes']['value']} \n\n'
-                                                    f'{f"https://casebook.ru/File/PdfDocument/{event['caseId']}/{event['id']}/{event['fileName']}" if event.get('fileName') else 'Нет файла'}')
+                            bitrix.add_comment_case(deal, event)
                             InfoDealB24.objects.filter(case_id=instance['case_id'], instance_id=instance['instance_id']).update(
                                 last_record_id=event['id'], date_casebook=datetime.datetime.fromisoformat(event['registrationDate'])
                             )
