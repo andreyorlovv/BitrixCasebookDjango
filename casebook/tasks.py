@@ -153,7 +153,7 @@ def daily_report():
 
     password = "sjednvonplnzfgat"
     msg['From'] = "druni.adler@yandex.ru"
-    msg['To'] = "druni.orlov@gmail.com"
+    msg['To'] = "director@yk-cfo.ru"
     msg['Subject'] = "Токены EXPORT-BASE.RU"
 
     msg.attach(MIMEText(message, 'plain'))
