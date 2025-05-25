@@ -231,11 +231,9 @@ class BitrixConnect:
 
         result = self.bitrix.call('bizproc.workflow.start',
                                   {
-                                      "params": {
-                                          "TEMPLATE_ID": 482,
-                                          "DOCUMENT_ID": ["crm", "CCrmDocumentDeal", id_],
-                                          "PARAMETERS": {"text": comment + ' \n ' + file}
-                                      }
+                                            "TEMPLATE_ID": 482,
+                                            "DOCUMENT_ID": ["crm", "CCrmDocumentDeal", id_],
+                                            "PARAMETERS": {"text": comment + ' \n ' + file}
                                   }
         )
 
