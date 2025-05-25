@@ -200,7 +200,7 @@ def updates_info_about_case():
                     for event in reversed(events):
                         if not InfoDealB24.objects.filter(instance_id=instance['instance_id'],
                                                           case_id=instance['case_id'],
-                                                          date_casebook__gt=parser.parse(event['registrationDate']))\
+                                                          date_casebook__gte=parser.parse(event['registrationDate']))\
                                 .exists():
                             bitrix.add_comment_case(deal, event)
                             InfoDealB24.objects.filter(case_id=instance['case_id'], instance_id=instance['instance_id']).update(
