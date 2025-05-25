@@ -49,7 +49,11 @@ def custom_index(request):
             'name': Filter.objects.filter(filter_id=task.filter_id).first().name
         })
     import requests
-    remaining_export_base = requests.get(f'https://export-base.ru/api/balance/?key={settings.EXPORT_BASE_API_KEY}')
+    try:
+        remaining_export_base = requests.get(f'https://export-base.ru/api/balance/?key={settings.EXPORT_BASE_API_KEY}')
+    except requests.exceptions.RequestException as e:
+        print(e)
+        remaining_export_base = 'Ошибка в подключении к ЭкспортБейс, СВЯЖИТЕСЬ С РАЗРАБОТЧИКОМ, СКОРЕЕ ВСЕГО ПРОБЕЛМА ЕСТЬ И В ПОЛУЧЕНГИИ КОНТАКТНЫХ ДАННЫХ!!!!'
     extra_context = {'filters': filters, 'form_create': form_create,
                      'tasks': tasks_to_render, 'remaining_export_base': remaining_export_base.text}
     return site.index(request, extra_context=extra_context)

@@ -141,27 +141,29 @@ def scan_enchanted(task_id):
 @shared_task
 def daily_report():
     import smtplib
+    try:
+        remaining_export_base = requests.get(f'https://export-base.ru/api/balance/?key={settings.EXPORT_BASE_API_KEY}')
+    except requests.exceptions.RequestException as e:
+        remaining_export_base = 'Ошибка в подключении к ЭкспортБейс, СВЯЖИТЕСЬ С РАЗРАБОТЧИКОМ, СКОРЕЕ ВСЕГО ПРОБЕЛМА ЕСТЬ И В ПОЛУЧЕНГИИ КОНТАКТНЫХ ДАННЫХ!!!!'
+    if int(remaining_export_base.text) <= 100:
+        message = f'''
+        ВНИМАНИЕ! Заканчиваются токены export-base, текущий остаток - {remaining_export_base.text}
+        
+        Необходимо пополнить баланс.
+        '''
+        msg = MIMEMultipart()
 
-    remaining_export_base = requests.get(f'https://export-base.ru/api/balance/?key={settings.EXPORT_BASE_API_KEY}')
+        password = "sjednvonplnzfgat"
+        msg['From'] = "druni.adler@yandex.ru"
+        msg['To'] = "director@yk-cfo.ru"
+        msg['Subject'] = "Токены EXPORT-BASE.RU"
 
-    message = f'''
-    ВНИМАНИЕ! Заканчиваются токены export-base, текущий остаток - {remaining_export_base.text}
-    
-    Необходимо пополнить баланс.
-    '''
-    msg = MIMEMultipart()
-
-    password = "sjednvonplnzfgat"
-    msg['From'] = "druni.adler@yandex.ru"
-    msg['To'] = "director@yk-cfo.ru"
-    msg['Subject'] = "Токены EXPORT-BASE.RU"
-
-    msg.attach(MIMEText(message, 'plain'))
-    server = smtplib.SMTP('smtp.yandex.ru: 587')
-    server.starttls()
-    server.login(msg['From'], password)
-    server.sendmail(msg['From'], msg['To'], msg.as_string())
-    server.quit()
+        msg.attach(MIMEText(message, 'plain'))
+        server = smtplib.SMTP('smtp.yandex.ru: 587')
+        server.starttls()
+        server.login(msg['From'], password)
+        server.sendmail(msg['From'], msg['To'], msg.as_string())
+        server.quit()
 
 
 @shared_task
