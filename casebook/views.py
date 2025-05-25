@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from requests import RequestException
+from requests.exceptions import SSLError
 from rest_framework.decorators import api_view
 
 import casebook.tasks
@@ -53,7 +54,7 @@ def custom_index(request):
     try:
         remaining_export_base = requests.get(f'https://export-base.ru/api/balance/?key={settings.EXPORT_BASE_API_KEY}')
         remaining_export_base.raise_for_status()
-    except RequestException as e:
+    except SSLError as e:
         print(e)
         remaining_export_base = 'Ошибка в подключении к ЭкспортБейс, СВЯЖИТЕСЬ С РАЗРАБОТЧИКОМ, СКОРЕЕ ВСЕГО ПРОБЕЛМА ЕСТЬ И В ПОЛУЧЕНГИИ КОНТАКТНЫХ ДАННЫХ!!!!'
     extra_context = {'filters': filters, 'form_create': form_create,

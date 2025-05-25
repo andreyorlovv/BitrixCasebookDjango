@@ -8,6 +8,7 @@ from celery import shared_task
 from django.conf import settings
 from django.db.models import QuerySet
 from fast_bitrix24.server_response import ErrorInServerResponseException
+from requests.exceptions import SSLError
 
 from casebook.bitrix import BitrixConnect
 from casebook.contacts_v2 import get_contacts_via_export_base, get_contacts
@@ -145,7 +146,7 @@ def daily_report():
         remaining_export_base = requests.get(f'https://export-base.ru/api/balance/?key={settings.EXPORT_BASE_API_KEY}')
         remaining_export_base.raise_for_status()
         remaining = remaining_export_base.text
-    except Exception as e:
+    except SSLError as e:
         remaining = 'Ошибка в подключении к ЭкспортБейс, СВЯЖИТЕСЬ С РАЗРАБОТЧИКОМ, СКОРЕЕ ВСЕГО ПРОБЕЛМА ЕСТЬ И В ПОЛУЧЕНГИИ КОНТАКТНЫХ ДАННЫХ!!!!'
     if int(remaining) <= 100 or remaining == 'Ошибка в подключении к ЭкспортБейс, СВЯЖИТЕСЬ С РАЗРАБОТЧИКОМ, СКОРЕЕ ВСЕГО ПРОБЕЛМА ЕСТЬ И В ПОЛУЧЕНГИИ КОНТАКТНЫХ ДАННЫХ!!!!':
         message = f'''
