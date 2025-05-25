@@ -87,6 +87,7 @@ def download_xlsx_view(request):
     worksheet.write(row, col + 4, 'Ошибка, если есть')
     worksheet.write(row, col + 5, 'Подборка')
     worksheet.write(row, col + 6, 'Ссылка на лид в Б24')
+    worksheet.write(row, col + 7, 'Контакты')
     row = 1
     for item in queryset:
         worksheet.write(row, col, item.id)
@@ -96,6 +97,7 @@ def download_xlsx_view(request):
         worksheet.write(row, col + 4, item.error_message)
         worksheet.write(row, col + 5, item.from_task.name)
         worksheet.write(row, col + 6, f'https://crm.yk-cfo.ru/crm/lead/details/{item.bitrix_lead_id}' if item.bitrix_lead_id else 'Не загружено')
+        worksheet.write(row, col + 7, item.contacts if item.contacts else 'Не загружено')
         row += 1
     workbook.close()
 
