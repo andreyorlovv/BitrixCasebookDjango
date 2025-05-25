@@ -45,9 +45,13 @@ class BlackListAdmin(admin.ModelAdmin):
     list_display = ('value', 'type')
 
 
+class InfoDealB24Admin(admin.ModelAdmin):
+    list_display = 'b24_id'
+    ordering = 'date_casebook'
+
 admin.site.register(Case, CaseAdmin)
 admin.site.register(StopList, StopListAdmin)
 admin.site.register(BlackList, BlackListAdmin)
 admin.site.register(Tasks)
-admin.site.register(InfoDealB24)
+admin.site.register(InfoDealB24, InfoDealB24Admin)
 admin.site.site_header = 'Парсер Casebook'

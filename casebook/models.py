@@ -92,8 +92,15 @@ class BlackList(models.Model):
 
 
 class InfoDealB24(models.Model):
-    b24_id = models.IntegerField(null=True, blank=True)
-    case_id = models.CharField(max_length=255, null=True, blank=True)
-    instance_id = models.CharField(max_length=255, null=True, blank=True)
-    last_record_id = models.CharField(max_length=255, null=True, blank=True)
-    date_casebook = models.DateTimeField(null=True, blank=True)
+    b24_id = models.IntegerField(null=True, blank=True, verbose_name='ID сделки B24')
+    case_id = models.CharField(max_length=255, null=True, blank=True, verbose_name='ID кейса на casebook.ru')
+    instance_id = models.CharField(max_length=255, null=True, blank=True, verbose_name='ID инстанции на casebook.ru')
+    last_record_id = models.CharField(max_length=255, null=True, blank=True, verbose_name='ID последней записи casebook.ru')
+    date_casebook = models.DateTimeField(null=True, blank=True, verbose_name='Дата последнего обновления на casebook.ru')
+
+    def __str__(self):
+        return f'{self.b24_id} - ID сделки внутри Б24 | {self.instance_id} | {self.date_casebook} - дата последней записи'
+
+    class Meta:
+        verbose_name = 'Справочник для обновления КАД'
+        verbose_name_plural = 'Справочник для обновления КАД'
