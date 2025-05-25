@@ -181,7 +181,11 @@ def updates_info_about_case():
 
     for deal in deals:
         try:
-            case = casebook.find_case(deal['UF_CRM_1599834564'])
+            try:
+                case = casebook.find_case(deal['UF_CRM_1599834564'])
+            except JSONDecodeError as e:
+                print(e)
+                continue
             instances = casebook.get_instances(case['id'])
             for instance in instances:
                 if not InfoDealB24.objects.filter(instance_id=instance['instance_id']).exists():
@@ -201,6 +205,5 @@ def updates_info_about_case():
 
         except KeyError as e:
             print(e)
-        except JSONDecodeError as e:
-            print(e)
+
 
