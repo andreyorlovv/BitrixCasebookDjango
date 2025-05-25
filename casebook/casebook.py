@@ -334,9 +334,9 @@ class Casebook:
         return result
 
     def find_case(self, case_number):
-        self.headless_auth()
         response =self.http_client.request('GET', f'https://casebook.ru/ms/Search/Suggest/QuickSearch?query={urlparse(case_number)}')
-
+        print(response.status)
+        print(response.data)
         result = json.loads(response.data.decode('utf-8'))
 
         return result['items'][0]
