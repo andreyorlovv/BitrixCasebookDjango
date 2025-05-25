@@ -239,12 +239,13 @@ class BitrixConnect:
 
         print(result)
 
-        # result = self.bitrix.call('crm.timeline.comment.add',
-        #                           # print('crm.timeline.comment.add',
-        #                           {
-        #                               'fields': {
-        #                                   'ENTITY_ID': id_,
-        #                                   'ENTITY_TYPE': 'deal',
-        #                                   'COMMENT': comment + ' \n ' + file,
-        #                               }
-        #                           })
+        result = self.bitrix.call('crm.timeline.comment.add',
+                                  {
+                                      'fields': {
+                                          'ENTITY_ID': id_,
+                                          'ENTITY_TYPE': 'deal',
+                                          'COMMENT': comment + ' \n ' + file,
+                                      }
+                                  })
+
+        print(result)
