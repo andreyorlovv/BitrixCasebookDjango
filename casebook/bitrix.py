@@ -237,6 +237,8 @@ class BitrixConnect:
                                   }
         )
 
+        print(result)
+
         # result = self.bitrix.call('crm.timeline.comment.add',
         #                           # print('crm.timeline.comment.add',
         #                           {
