@@ -175,7 +175,7 @@ def updates_info_about_case():
     casebook = Casebook(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
     bitrix = BitrixConnect(webhook=settings.BITRIX_CALLBACK)
     deals = bitrix.get_cases({
-        '@STAGE_ID': ['C2:UC_WM14DA', 'C2:UC_UNGBSA', 'C2:NEW', 'C2:UC_UMRJ10', 'C2:PREPAYMENT_INVOICE']
+        '@STAGE_ID': ['C2:UC_WM14DA']#, 'C2:UC_UNGBSA', 'C2:NEW', 'C2:UC_UMRJ10', 'C2:PREPAYMENT_INVOICE']
     })
 
     for deal in deals:
