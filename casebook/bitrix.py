@@ -221,7 +221,7 @@ class BitrixConnect:
     def add_comment_case(self, deal, event):
         id_ = deal['ID']
 
-        comment = f"[Kad.Arbitr] {datetime.fromisoformat(event['registrationDate']).date()} - {event['type']} - {event['contentTypes'][0]['value']} \n"
+        comment = f"[Kad.Arbitr] {datetime.strptime(event['registrationDate'], '%Y-%m-%dT%H:%M:%S').date()} - {event['type']} - {event['contentTypes'][0]['value']} \n"
         try:
             comment += f"Заявитель: {event['reasonDocumentInfo']['declarers'][0]['shortName']}"
         except KeyError as e:

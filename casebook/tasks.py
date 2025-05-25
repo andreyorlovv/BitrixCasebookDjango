@@ -199,11 +199,11 @@ def updates_info_about_case():
                     for event in reversed(events):
                         if not InfoDealB24.objects.filter(instance_id=instance['instance_id'],
                                                           case_id=instance['case_id'],
-                                                          date_casebook__gt=datetime.datetime.fromisoformat(event['registrationDate']))\
+                                                          date_casebook__gt=datetime.datetime.strptime(event['registrationDate'], '%Y-%m-%dT%H:%M:%S'))\
                                 .exists():
                             bitrix.add_comment_case(deal, event)
                             InfoDealB24.objects.filter(case_id=instance['case_id'], instance_id=instance['instance_id']).update(
-                                last_record_id=event['id'], date_casebook=datetime.datetime.fromisoformat(event['registrationDate'])
+                                last_record_id=event['id'], date_casebook=datetime.datetime.strptime(event['registrationDate'], '%Y-%m-%dT%H:%M:%S')
                             )
 
         except KeyError as e:
