@@ -182,14 +182,13 @@ def updates_info_about_case():
     for deal in deals:
         try:
             try:
-                print(deal)
                 case = casebook.find_case(deal['UF_CRM_1599834564'])
             except json.decoder.JSONDecodeError as e:
                 print(e)
                 continue
             instances = casebook.get_instances(case['id'])
             for instance in instances:
-                if not InfoDealB24.objects.filter(instance_id=instance['instance_id']).exists():
+                if not InfoDealB24.objects.filter(instance_id=instance['instance_id'], case_id=instance['case_id']).exists():
                     InfoDealB24.objects.create(
                         b24_id=deal['ID'],
                         case_id=instance['case_id'],
@@ -198,7 +197,10 @@ def updates_info_about_case():
                 events = casebook.get_history(instance['case_id'], instance['instance_id'])
                 if not InfoDealB24.objects.filter(last_record_id=events[0]['id']).exists():
                     for event in reversed(events):
-                        if InfoDealB24.objects.filter(last_record_id=event['id']).first().date_casebook < datetime.datetime.fromisoformat(event['registrationDate']):
+                        if not InfoDealB24.objects.filter(instance_id=instance['instance_id'],
+                                                          case_id=instance['case_id'],
+                                                          date_casebook__gt=datetime.datetime.fromisoformat(event['registrationDate']))\
+                                .exists():
                             bitrix.add_comment_case(deal, event)
                             InfoDealB24.objects.filter(case_id=instance['case_id'], instance_id=instance['instance_id']).update(
                                 last_record_id=event['id'], date_casebook=datetime.datetime.fromisoformat(event['registrationDate'])
