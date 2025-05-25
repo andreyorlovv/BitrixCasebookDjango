@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import json
+from urllib.parse import urlparse
 
 import urllib3
 from django.conf import settings
