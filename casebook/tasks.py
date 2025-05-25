@@ -143,11 +143,13 @@ def daily_report():
     import smtplib
     try:
         remaining_export_base = requests.get(f'https://export-base.ru/api/balance/?key={settings.EXPORT_BASE_API_KEY}')
+        remaining_export_base.raise_for_status()
+        remaining = remaining_export_base.text
     except Exception as e:
-        remaining_export_base = 'Ошибка в подключении к ЭкспортБейс, СВЯЖИТЕСЬ С РАЗРАБОТЧИКОМ, СКОРЕЕ ВСЕГО ПРОБЕЛМА ЕСТЬ И В ПОЛУЧЕНГИИ КОНТАКТНЫХ ДАННЫХ!!!!'
-    if int(remaining_export_base.text) <= 100:
+        remaining = 'Ошибка в подключении к ЭкспортБейс, СВЯЖИТЕСЬ С РАЗРАБОТЧИКОМ, СКОРЕЕ ВСЕГО ПРОБЕЛМА ЕСТЬ И В ПОЛУЧЕНГИИ КОНТАКТНЫХ ДАННЫХ!!!!'
+    if int(remaining) <= 100 or remaining == 'Ошибка в подключении к ЭкспортБейс, СВЯЖИТЕСЬ С РАЗРАБОТЧИКОМ, СКОРЕЕ ВСЕГО ПРОБЕЛМА ЕСТЬ И В ПОЛУЧЕНГИИ КОНТАКТНЫХ ДАННЫХ!!!!':
         message = f'''
-        ВНИМАНИЕ! Заканчиваются токены export-base, текущий остаток - {remaining_export_base.text}
+        ВНИМАНИЕ! Заканчиваются токены export-base, текущий остаток - {remaining}
         
         Необходимо пополнить баланс.
         '''
