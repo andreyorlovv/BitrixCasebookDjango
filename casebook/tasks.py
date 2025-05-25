@@ -8,6 +8,7 @@ from celery import shared_task
 from django.conf import settings
 from django.db.models import QuerySet
 from fast_bitrix24.server_response import ErrorInServerResponseException
+from requests import JSONDecodeError
 from requests.exceptions import SSLError
 
 from casebook.bitrix import BitrixConnect
@@ -199,5 +200,7 @@ def updates_info_about_case():
                             )
 
         except KeyError as e:
+            print(e)
+        except JSONDecodeError as e:
             print(e)
 
