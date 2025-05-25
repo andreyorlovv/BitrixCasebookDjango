@@ -51,7 +51,7 @@ def custom_index(request):
     import requests
     try:
         remaining_export_base = requests.get(f'https://export-base.ru/api/balance/?key={settings.EXPORT_BASE_API_KEY}')
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         print(e)
         remaining_export_base = 'Ошибка в подключении к ЭкспортБейс, СВЯЖИТЕСЬ С РАЗРАБОТЧИКОМ, СКОРЕЕ ВСЕГО ПРОБЕЛМА ЕСТЬ И В ПОЛУЧЕНГИИ КОНТАКТНЫХ ДАННЫХ!!!!'
     extra_context = {'filters': filters, 'form_create': form_create,

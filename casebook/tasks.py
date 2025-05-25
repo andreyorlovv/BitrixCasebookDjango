@@ -143,7 +143,7 @@ def daily_report():
     import smtplib
     try:
         remaining_export_base = requests.get(f'https://export-base.ru/api/balance/?key={settings.EXPORT_BASE_API_KEY}')
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         remaining_export_base = 'Ошибка в подключении к ЭкспортБейс, СВЯЖИТЕСЬ С РАЗРАБОТЧИКОМ, СКОРЕЕ ВСЕГО ПРОБЕЛМА ЕСТЬ И В ПОЛУЧЕНГИИ КОНТАКТНЫХ ДАННЫХ!!!!'
     if int(remaining_export_base.text) <= 100:
         message = f'''
