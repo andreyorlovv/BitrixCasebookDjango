@@ -182,6 +182,7 @@ def updates_info_about_case():
     for deal in deals:
         try:
             try:
+                print(deal)
                 case = casebook.find_case(deal['UF_CRM_1599834564'])
             except json.decoder.JSONDecodeError as e:
                 print(e)
