@@ -46,8 +46,8 @@ class BlackListAdmin(admin.ModelAdmin):
 
 
 class InfoDealB24Admin(admin.ModelAdmin):
-    list_display = 'b24_id'
-    ordering = 'date_casebook'
+    list_display = ('b24_id',)
+    ordering = ('date_casebook',)
 
 admin.site.register(Case, CaseAdmin)
 admin.site.register(StopList, StopListAdmin)
