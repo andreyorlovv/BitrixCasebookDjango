@@ -229,12 +229,22 @@ class BitrixConnect:
         file = f'https://casebook.ru/File/PdfDocument/{event["caseId"]}/{event["id"]}/{event["fileName"]}' if event.get(
             'fileName') else 'Нет файла'
 
-        result = self.bitrix.call('crm.timeline.comment.add',
-                                  # print('crm.timeline.comment.add',
+        result = self.bitrix.call('bizproc.workflow.start',
                                   {
-                                      'fields': {
-                                          'ENTITY_ID': id_,
-                                          'ENTITY_TYPE': 'deal',
-                                          'COMMENT': comment + ' \n ' + file,
+                                      "params": {
+                                          "TEMPLATE_ID": 482,
+                                          "DOCUMENT_ID": ["crm", "CCrmDocumentDeal", id_],
+                                          "PARAMETERS": {"text": comment + ' \n ' + file}
                                       }
-                                  })
+                                  }
+        )
+
+        # result = self.bitrix.call('crm.timeline.comment.add',
+        #                           # print('crm.timeline.comment.add',
+        #                           {
+        #                               'fields': {
+        #                                   'ENTITY_ID': id_,
+        #                                   'ENTITY_TYPE': 'deal',
+        #                                   'COMMENT': comment + ' \n ' + file,
+        #                               }
+        #                           })
