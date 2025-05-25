@@ -8,6 +8,8 @@ from bs4 import BeautifulSoup
 from lxml import etree
 import sqlite3
 
+from requests.exceptions import SSLError
+
 from casebook.models import BlackList
 
 
@@ -184,7 +186,11 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
     elif inn:
         url = f'https://export-base.ru/api/company/?inn={inn}&key={key}'
 
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except SSLError as e:
+        print(e)
 
     result_data = json.loads(response.text)
     try:
