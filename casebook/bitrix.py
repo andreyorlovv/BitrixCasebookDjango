@@ -238,8 +238,6 @@ class BitrixConnect:
                                   }
         )
 
-        print(result)
-
         result = self.bitrix.call('crm.timeline.comment.add',
                                   {
                                       'fields': {
@@ -248,5 +246,3 @@ class BitrixConnect:
                                           'COMMENT': comment + ' \n ' + file,
                                       }
                                   })
-
-        print(result)
