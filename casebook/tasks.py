@@ -129,7 +129,7 @@ def scan_enchanted(task_id):
                     process_date=datetime.datetime.now(),
                     case_id=case.number,
                     is_success=False,
-                    error_message=f'{e}, {e.__traceback__}, {e.with_traceback()} ,{case.contacts_info} \n\n\n {case}',
+                    error_message=f'{e}, {e.__traceback__}, {e.with_traceback()}, {e.args} ,{case.contacts_info} \n\n\n {case}',
                     from_task=Filter.objects.get(filter_id=task.filter_id),
                 )
     task.last_execution = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
