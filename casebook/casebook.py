@@ -36,8 +36,11 @@ class Case:
     number: str
     reg_date: datetime.date
     _type: dict
-    contacts_info: dict = dataclasses.field(default_factory=dict)
+    contacts_info: dict = dataclasses.field(default_factory=dict, init=False)
     error: str = None
+
+    def __post_init__(self):
+        self.contacts_info = {'emails': [], 'numbers': []}
 
 
 class BlackListException(Exception):
