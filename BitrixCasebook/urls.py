@@ -27,6 +27,7 @@ urlpatterns = [
     path('add_to_black_list/', csrf_exempt(views.add_to_blacklist), name='add to BL'),
     path('download_xlsx/', views.download_xlsx_view, name='download'),
     path('delete_task/', views.process_delete_task, name='delete_task'),
+    path('process_task/', views.process_task, name='process_task'),
     path('update_filters/', views.update_filters, name='update_filters'),
     path('', views.custom_index, name='admin_custom_index'),
     path('', admin.site.urls),

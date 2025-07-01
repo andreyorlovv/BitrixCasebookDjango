@@ -62,6 +62,13 @@ def custom_index(request):
 
 
 @login_required(login_url='/login/')
+def process_task(request):
+    casebook.tasks.scan_enchanted(task_id=request.GET.get('task_id'))
+    return redirect('/')
+
+
+
+@login_required(login_url='/login/')
 def process_delete_task(request):
     Tasks.objects.get(id=request.GET.get('id')).delete()
     return redirect('/')
