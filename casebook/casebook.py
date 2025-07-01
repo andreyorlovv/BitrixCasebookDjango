@@ -1,6 +1,7 @@
 import dataclasses
 import datetime
 import os
+import re
 import sys
 import time
 import json
@@ -75,7 +76,7 @@ class Casebook:
             body = f'''
                         {{
                             "systemName": "Sps",
-                            "username": "{login}",
+                            "userName": "{login}",
                             "password": "{password}"
                         }}
                         '''
@@ -85,7 +86,12 @@ class Casebook:
 
             response = http_client.request('POST', 'https://casebook.ru/api/Account/LogOn', f'{body}')
 
-            # asp_token = re.search(r"(?<=ASPXAUTH=)\w{64}", response.headers['Set-Cookie']).group()
+            asp_token = re.search(r"(?<=ASPXAUTH=)[^;]+", response.headers['Set-Cookie']).group()
+
+            sps_user_id = re.search(r"(?<=SpsUserId=)[^;]+", response.headers['Set-Cookie']).group()
+
+            mlr_session = re.search(r"(?<=MLR_Session=)[^;]+", response.headers['Set-Cookie']).group()
+
 
             response_token = http_client.request('GET',
                                                  f'https://casebook.ru/ms/webassembly/Wasm/api/v1/protection.js?_={round(time.time() * 1000)}',
@@ -112,8 +118,11 @@ class Casebook:
             self.auth_email = login
 
             self.headers = {
-                'cookie': f'.AuthToken={self.auth_token};'
-                          f' .AuthEmail={self.auth_email}',
+                'cookie': f'.AuthToken={self.auth_token}; '
+                          f'.AuthEmail={self.auth_email}; '
+                          f'SpsUserId={sps_user_id}; '
+                          f'.ASPXAUTH={asp_token}; '
+                          f'MLR_Session={mlr_session}; ',
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                               'Chrome/118.0.5993.2470 YaBrowser/23.11.0.2470 Yowser/2.5 Safari/537.36',
                 'content-type': 'application/json'
@@ -441,16 +450,16 @@ if __name__ == '__main__':
 
     print(casebook_api.get_filters())
 
-    case = casebook_api.find_case('А29-5940/2025')
-    instances = casebook_api.get_instances(case['id'])
-    events = casebook_api.get_history(instances[0]['case_id'], instances[0]['instance_id'])
-    for event in events:
-        print(
-            event['courtName'],
-            event['type'],
-            event['contentTypes'],
-            event['registrationDate'],
-            f"https://casebook.ru/File/PdfDocument/{event['caseId']}/{event['id']}/{event['fileName']}" if event.get(
-                'fileName') else 'Нет файла',
-            sep=', '
-        )
+    # case = casebook_api.find_case('А29-5940/2025')
+    # instances = casebook_api.get_instances(case['id'])
+    # events = casebook_api.get_history(instances[0]['case_id'], instances[0]['instance_id'])
+    # for event in events:
+    #     print(
+    #         event['courtName'],
+    #         event['type'],
+    #         event['contentTypes'],
+    #         event['registrationDate'],
+    #         f"https://casebook.ru/File/PdfDocument/{event['caseId']}/{event['id']}/{event['fileName']}" if event.get(
+    #             'fileName') else 'Нет файла',
+    #         sep=', '
+    #     )
