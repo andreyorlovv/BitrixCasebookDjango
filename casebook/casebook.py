@@ -167,7 +167,7 @@ class Casebook:
 
             print(f"Статус запроса кол-ва страниц - {response.status}")
             serialized = json.loads(response.data)
-        except JSONDecodeError as e:
+        except json.decoder.JSONDecodeError as e:
             print(str(query))
             print(self.headers)
             print(e)
