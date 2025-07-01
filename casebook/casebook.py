@@ -163,14 +163,15 @@ class Casebook:
                                                 .replace('True', 'true')
                                                 .replace('False', 'false'),
                                                 headers=self.headers)
+
+
+            print(f"Статус запроса кол-ва страниц - {response.status}")
+            serialized = json.loads(response.data)
         except JSONDecodeError as e:
             print(str(query))
             print(self.headers)
             print(e)
             return
-
-        print(f"Статус запроса кол-ва страниц - {response.status}")
-        serialized = json.loads(response.data)
         pages = serialized['result']['pagesCount']
         cases = []
         result = []
