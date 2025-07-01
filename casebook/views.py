@@ -63,7 +63,7 @@ def custom_index(request):
 
 @login_required(login_url='/login/')
 def process_task(request):
-    casebook.tasks.scan_enchanted(task_id=request.GET.get('task_id'))
+    casebook.tasks.scan_enchanted.apply_async((request.GET.get('task_id')))
     return redirect('/')
 
 

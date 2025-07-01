@@ -8,6 +8,8 @@ from urllib.parse import urlparse
 
 import urllib3
 from django.conf import settings
+from exceptiongroup import catch
+from requests import JSONDecodeError
 
 from casebook import models
 from casebook.models import StopList, BlackList, Filter
@@ -154,12 +156,19 @@ class Casebook:
         query['count'] = 30
         query['isNeedStat'] = True
         query = str(query)
-        response = self.http_client.request('POST', 'https://casebook.ru/ms/Search/Cases/Search',
-                                            body=query.replace('None', 'null')
-                                            .replace("'", '"')
-                                            .replace('True', 'true')
-                                            .replace('False', 'false'),
-                                            headers=self.headers)
+        try:
+            response = self.http_client.request('POST', 'https://casebook.ru/ms/Search/Cases/Search',
+                                                body=query.replace('None', 'null')
+                                                .replace("'", '"')
+                                                .replace('True', 'true')
+                                                .replace('False', 'false'),
+                                                headers=self.headers)
+        except JSONDecodeError as e:
+            print(str(query))
+            print(self.headers)
+            print(e)
+            return
+
         print(f"Статус запроса кол-ва страниц - {response.status}")
         serialized = json.loads(response.data)
         pages = serialized['result']['pagesCount']
