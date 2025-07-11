@@ -138,7 +138,7 @@ def scan_enchanted(task_id):
         args=[task.id],
         eta=(datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(minutes=task.iteration_interval)),
         retry=False,
-        expires=1200
+        expires=2400
     )
 
 
