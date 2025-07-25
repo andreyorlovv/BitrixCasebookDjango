@@ -203,8 +203,10 @@ class Casebook:
             try:
                 for case in serialized_page['result']['items']:
                     cases.append(case)
-            except KeyError:
+            except Exception as e:
                 print(serialized_page)
+                print(e)
+                print(e.with_traceback())
         for case in cases:
             if cash:
                 if case['claimSum'] <= cash and not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists():
