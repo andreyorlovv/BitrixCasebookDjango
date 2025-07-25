@@ -153,6 +153,10 @@ def get_contacts(inn, ogrn):
     valid_numbers = []
 
     for number in number_list:
+        if number == '':
+            continue
+        if number[0] == '8':
+            number[0] = '7'
         number = number.replace('+7', '7')
         number = number.replace(' ', '')
         number = number.replace('(', '')
@@ -185,6 +189,8 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         url = f'https://export-base.ru/api/company/?ogrn={ogrn}&key={key}'
     elif inn:
         url = f'https://export-base.ru/api/company/?inn={inn}&key={key}'
+    else:
+        url = f'https://export-base.ru/api/company/?inn={inn}&ogrn={ogrn}&key={key}'
 
     try:
         response = requests.get(url)
@@ -221,7 +227,10 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
     valid_numbers = []
 
     for number in number_list:
-        if number == '': continue
+        if number == '':
+            continue
+        if number[0] == '8':
+            number[0] = '7'
         number = number.replace('+7', '7')
         number = number.replace(' ', '')
         number = number.replace('(', '')

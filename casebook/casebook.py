@@ -200,7 +200,7 @@ class Casebook:
             print(f"Статус запроса {page}-ой страницы - {response.status}")
         
             serialized_page = json.loads(response.data)
-            
+            print(serialized_page)
             for case in serialized_page['result']['items']:
                 cases.append(case)
         for case in cases:
