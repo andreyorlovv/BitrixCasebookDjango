@@ -200,13 +200,9 @@ class Casebook:
             print(f"Статус запроса {page}-ой страницы - {response.status}")
         
             serialized_page = json.loads(response.data)
-            try:
-                for case in serialized_page['result']['items']:
-                    cases.append(case)
-            except Exception as e:
-                print(serialized_page)
-                print(e)
-                print(e.with_traceback())
+            for case in serialized_page['result']['items']:
+                cases.append(case)
+
         for case in cases:
             if cash:
                 if case['claimSum'] <= cash and not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists():
