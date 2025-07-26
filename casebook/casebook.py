@@ -197,9 +197,11 @@ class Casebook:
                                                 .replace('True', 'true')
                                                 .replace('False', 'false'),
                                                 headers=self.headers)
+
             print(f"Статус запроса {page}-ой страницы - {response.status}")
-        
+
             serialized_page = json.loads(response.data)
+
             for case in serialized_page['result']['items']:
                 cases.append(case)
 
