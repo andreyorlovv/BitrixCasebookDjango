@@ -1,5 +1,6 @@
 from datetime import datetime
 from types import NoneType
+from xmlrpc.client import FastParser
 
 from dateutil import parser
 from fast_bitrix24 import Bitrix
@@ -136,6 +137,10 @@ class BitrixConnect:
             UF_CRM_1703234971 = 893 if rights == True else 894
         elif type(rights) == int:
             UF_CRM_1703234971 = rights
+        elif type(rights) == str:
+            UF_CRM_1703234971 = rights
+        else:
+            UF_CRM_1703234971 = False
         # UF_CRM_1703235529 = "Исключительные права" if rights else "Неисключительные права"
         # UF_CRM_1703234971 = "Ответчик - ИП" if len(case.respondent.inn) == 12 else "Ответчик - ООО"
         from casebook.contacts_v2 import get_name
