@@ -156,7 +156,7 @@ def get_contacts(inn, ogrn):
         if number == '':
             continue
         if number[0] == '8':
-            number[0] = '7'
+            number = '7' + number[1:]
         number = number.replace('+7', '7')
         number = number.replace(' ', '')
         number = number.replace('(', '')
