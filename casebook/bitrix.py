@@ -141,27 +141,52 @@ class BitrixConnect:
         from casebook.contacts_v2 import get_name
         name = get_name(case.respondent.ogrn)
 
+
+
         if type(name) != NoneType:
             if len(name) < 4:
-                print("Не удалось найти ФИО")
-                items = {"fields": {
-                    "TITLE": case.number,
-                    "UF_CRM_1703238484214": case.url,
-                    "STATUS_ID": "UC_0LLO5N",
-                    "COMPANY_TITLE": case.respondent.name,
-                    "UF_CRM_1702365701": case.number,
-                    "UF_CRM_1702366987": courts.get(case.court),
-                    "UF_CRM_1702365740": case.reg_date.isoformat(),
-                    "UF_CRM_1702365922": f'{case.plaintiff.name}',
-                    "UF_CRM_1702365965": case.sum_,
-                    "PHONE": phones,
-                    "EMAIL": emails,
-                    "UF_CRM_1703235529": UF_CRM_1703235529,
-                    "UF_CRM_1703234971": UF_CRM_1703234971,
-                    "UF_CRM_1707995533": case.respondent.inn,
-                    "ASSIGNED_BY_ID": 1690,
-                    "ADDRESS": case.respondent.address,
-                }}
+                print("Не удалось найти ФИО, проверяем на ИП")
+                if 'Индивидуальный предприниматель' in case.respondent.inn:
+                    items = {"fields": {
+                        "LAST_NAME": case.respondent.name.split()[2],
+                        "NAME": case.respondent.name.split()[3],
+                        "SECOND_NAME": case.respondent.name.split()[4],
+                        "TITLE": case.number,
+                        "UF_CRM_1703238484214": case.url,
+                        "STATUS_ID": "UC_0LLO5N",
+                        "COMPANY_TITLE": case.respondent.name,
+                        "UF_CRM_1702365701": case.number,
+                        "UF_CRM_1702366987": courts.get(case.court),
+                        "UF_CRM_1702365740": case.reg_date.isoformat(),
+                        "UF_CRM_1702365922": f'{case.plaintiff.name}',
+                        "UF_CRM_1702365965": case.sum_,
+                        "PHONE": phones,
+                        "EMAIL": emails,
+                        "UF_CRM_1703235529": UF_CRM_1703235529,
+                        "UF_CRM_1703234971": UF_CRM_1703234971,
+                        "UF_CRM_1707995533": case.respondent.inn,
+                        "ASSIGNED_BY_ID": 1690,
+                        "ADDRESS": case.respondent.address,
+                    }}
+                else:
+                    items = {"fields": {
+                        "TITLE": case.number,
+                        "UF_CRM_1703238484214": case.url,
+                        "STATUS_ID": "UC_0LLO5N",
+                        "COMPANY_TITLE": case.respondent.name,
+                        "UF_CRM_1702365701": case.number,
+                        "UF_CRM_1702366987": courts.get(case.court),
+                        "UF_CRM_1702365740": case.reg_date.isoformat(),
+                        "UF_CRM_1702365922": f'{case.plaintiff.name}',
+                        "UF_CRM_1702365965": case.sum_,
+                        "PHONE": phones,
+                        "EMAIL": emails,
+                        "UF_CRM_1703235529": UF_CRM_1703235529,
+                        "UF_CRM_1703234971": UF_CRM_1703234971,
+                        "UF_CRM_1707995533": case.respondent.inn,
+                        "ASSIGNED_BY_ID": 1690,
+                        "ADDRESS": case.respondent.address,
+                    }}
             else:
                 full_name = name.split(' ')
                 items = {"fields": {
