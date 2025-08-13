@@ -27,7 +27,7 @@ def get_tasks_from_db():
             scan_enchanted.apply_async(args=[task.id], retry=False, expires=600)
         elif int((task.last_execution - datetime.datetime.now(
                 tz=datetime.timezone.utc)).seconds % 3600 / 60.0) > task.iteration_interval:
-            scan_enchanted.apply_async(args=[task.id], retry=False, expires=600)
+            scan_enchanted.apply_async(args=[task.id], retry=False, expires=1700)
 
 
 @shared_task
