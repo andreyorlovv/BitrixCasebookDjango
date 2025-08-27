@@ -43,7 +43,7 @@ class Case:
     error: str = None
 
     def __post_init__(self):
-        self.contacts_info = {'emails': [], 'numbers': []}
+        self.contacts_info = {'emails': [], 'numbers': [], 'blacklist_emails': [], 'blacklist_numbers': []}
 
 
 class BlackListException(Exception):
