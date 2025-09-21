@@ -134,12 +134,12 @@ class BitrixConnect:
         for email in case.contacts_info['emails']:
             emails.append({'VALUE': str(email), 'VALUE_TYPE': 'WORK'})
         for email in case.contacts_info['blacklist_emails']:
-            bl_emails.append({'VALUE': str(email)})
+            bl_emails += str(email) + ' | '
         for phone in case.contacts_info['blacklist_numbers']:
-            bl_phones.append({'VALUE': str(phone)})
+            bl_phones += str(phone) + ' | '
 
-        UF_CRM_1755263777 = bl_phones
-        UF_CRM_1755263856 = bl_emails
+        UF_CRM_1755263777 = {'VALUE': bl_phones}
+        UF_CRM_1755263856 = {'VALUE': bl_emails}
 
         UF_CRM_1703235529 = 896 if len(case.respondent.inn) == 12 else 898
         if type(rights) == bool:
@@ -181,8 +181,8 @@ class BitrixConnect:
                         "UF_CRM_1707995533": case.respondent.inn,
                         "ASSIGNED_BY_ID": 1690,
                         "ADDRESS": case.respondent.address,
-                        "UF_CRM_1755263777": UF_CRM_1755263777,
-                        "UF_CRM_1755263856": UF_CRM_1755263856,
+                        "UF_CRM_1755263777": str(UF_CRM_1755263777),
+                        "UF_CRM_1755263856": str(UF_CRM_1755263856),
                     }}
                 else:
                     items = {"fields": {
@@ -202,8 +202,8 @@ class BitrixConnect:
                         "UF_CRM_1707995533": case.respondent.inn,
                         "ASSIGNED_BY_ID": 1690,
                         "ADDRESS": case.respondent.address,
-                        "UF_CRM_1755263777": UF_CRM_1755263777,
-                        "UF_CRM_1755263856": UF_CRM_1755263856,
+                        "UF_CRM_1755263777": str(UF_CRM_1755263777),
+                        "UF_CRM_1755263856": str(UF_CRM_1755263856),
                     }}
             else:
                 full_name = name.split(' ')
@@ -227,8 +227,8 @@ class BitrixConnect:
                     "NAME": full_name[1],
                     "SECOND_NAME": full_name[2],
                     "ADDRESS": case.respondent.address,
-                    "UF_CRM_1755263777": UF_CRM_1755263777,
-                    "UF_CRM_1755263856": UF_CRM_1755263856,
+                    "UF_CRM_1755263777": str(UF_CRM_1755263777),
+                    "UF_CRM_1755263856": str(UF_CRM_1755263856),
                 }}
         else:
             items = {"fields": {
@@ -248,8 +248,8 @@ class BitrixConnect:
                 "UF_CRM_1707995533": case.respondent.inn,
                 "ADDRESS": case.respondent.address,
                 "ASSIGNED_BY_ID": 1690,
-                "UF_CRM_1755263777": UF_CRM_1755263777,
-                "UF_CRM_1755263856": UF_CRM_1755263856,
+                "UF_CRM_1755263777": str(UF_CRM_1755263777),
+                "UF_CRM_1755263856": str(UF_CRM_1755263856),
             }}
 
         result = self.bitrix.call('crm.lead.add',

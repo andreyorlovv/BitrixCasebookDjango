@@ -89,7 +89,7 @@ def scan_enchanted(task_id):
             print(case.number)
             try:
                 if not Case.objects.filter(case_id=str(case.number)).exists() or (not Case.objects.filter(case_id=case.number, from_task__id=filter_.id).exists() and task.ignore_other_tasks_processed):
-                        case.contacts_info = {'emails': [], 'numbers': []}
+                        case.contacts_info = {'emails': [], 'numbers': [], 'blacklist_emails': [], 'blacklist_numbers': []}
                         case.contacts_info = get_contacts_via_export_base(ogrn=case.respondent.ogrn, inn=case.respondent.inn,
                                                                           key=settings.EXPORT_BASE_API_KEY)
                 if case.contacts_info['numbers'] and task.contacts:
