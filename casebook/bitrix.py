@@ -134,9 +134,9 @@ class BitrixConnect:
         for email in case.contacts_info['emails']:
             emails.append({'VALUE': str(email), 'VALUE_TYPE': 'WORK'})
         for email in case.contacts_info['blacklist_emails']:
-            bl_emails.append({'VALUE': str(email), 'VALUE_TYPE': 'WORK'})
+            bl_emails.append({'VALUE': str(email)})
         for phone in case.contacts_info['blacklist_numbers']:
-            bl_phones.append({'VALUE': str(phone), 'VALUE_TYPE': 'WORK'})
+            bl_phones.append({'VALUE': str(phone)})
 
         UF_CRM_1755263777 = bl_phones
         UF_CRM_1755263856 = bl_emails
