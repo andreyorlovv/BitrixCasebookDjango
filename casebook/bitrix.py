@@ -117,8 +117,8 @@ class BitrixConnect:
         emails = []
         phones = []
 
-        bl_emails = []
-        bl_phones = []
+        bl_emails = ''
+        bl_phones = ''
         if case.respondent.inn is None or case.respondent.inn == '':
             from casebook.models import Case as CaseModel
             CaseModel.objects.create(
