@@ -181,8 +181,8 @@ class BitrixConnect:
                         "UF_CRM_1707995533": case.respondent.inn,
                         "ASSIGNED_BY_ID": 1690,
                         "ADDRESS": case.respondent.address,
-                        "UF_CRM_1755263777": UF_CRM_1755263777,
-                        "UF_CRM_1755263856": UF_CRM_1755263856,
+                        "UF_CRM_1759395470157": UF_CRM_1755263777,
+                        "UF_CRM_1759395435927": UF_CRM_1755263856,
                     }}
                 else:
                     items = {"fields": {
@@ -202,8 +202,8 @@ class BitrixConnect:
                         "UF_CRM_1707995533": case.respondent.inn,
                         "ASSIGNED_BY_ID": 1690,
                         "ADDRESS": case.respondent.address,
-                        "UF_CRM_1755263777": UF_CRM_1755263777,
-                        "UF_CRM_1755263856": UF_CRM_1755263856,
+                        "UF_CRM_1759395470157": UF_CRM_1755263777,
+                        "UF_CRM_1759395435927": UF_CRM_1755263856,
                     }}
             else:
                 full_name = name.split(' ')
@@ -227,8 +227,8 @@ class BitrixConnect:
                     "NAME": full_name[1],
                     "SECOND_NAME": full_name[2],
                     "ADDRESS": case.respondent.address,
-                    "UF_CRM_1755263777": UF_CRM_1755263777,
-                    "UF_CRM_1755263856": UF_CRM_1755263856,
+                    "UF_CRM_1759395470157": UF_CRM_1755263777,
+                    "UF_CRM_1759395435927": UF_CRM_1755263856,
                 }}
         else:
             items = {"fields": {
@@ -248,8 +248,8 @@ class BitrixConnect:
                 "UF_CRM_1707995533": case.respondent.inn,
                 "ADDRESS": case.respondent.address,
                 "ASSIGNED_BY_ID": 1690,
-                "UF_CRM_1755263777": UF_CRM_1755263777,
-                "UF_CRM_1755263856": UF_CRM_1755263856,
+                "UF_CRM_1759395470157": UF_CRM_1755263777,
+                "UF_CRM_1759395435927": UF_CRM_1755263856,
             }}
 
         result = self.bitrix.call('crm.lead.add',
