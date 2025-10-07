@@ -9,7 +9,6 @@ from urllib.parse import urlparse
 
 import urllib3
 from django.conf import settings
-from exceptiongroup import catch
 from requests import JSONDecodeError
 
 from casebook import models
@@ -242,6 +241,19 @@ class Casebook:
                         cases.remove(case)
                 except Exception as e:
                     pass
+
+            if filter_id == 749741:
+                if self._check_for_judjorders(case['caseNumber']): pass
+                else:
+                    models.Case.objects.create(
+                        process_date=datetime.datetime.now(),
+                        case_id=case['caseNumber'],
+                        is_success=False,
+                        error_message='Не является судебным приказом, отфильтровано',
+                        from_task=Filter.objects.get(filter_id=filter_id)
+                    )
+                    cases.remove(case)
+
         cases_to_process = []
         for case in cases:
             if not CaseModel.objects.filter(case_id=case['caseNumber']).exists():
@@ -441,6 +453,14 @@ class Casebook:
         serialized = json.loads(response.data.decode('utf-8'))['items']
         return serialized
 
+    def _check_for_judjorders(self, case_id):
+        instances = self.get_instances(case_id)
+        for instance in instances:
+            events = self.get_history(case_id, instance['instance_id'])
+            for event in events:
+                for content in event['contentTypes']:
+                    if re.search(r'.*судебн.*приказ', content['value']): return True
+        else: return False
 
 if __name__ == '__main__':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BitrixCasebook.settings')
