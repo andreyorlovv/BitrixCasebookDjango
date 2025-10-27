@@ -138,8 +138,8 @@ class BitrixConnect:
         for phone in case.contacts_info['blacklist_numbers']:
             bl_phones += str(phone) + ' | '
 
-        UF_CRM_1755263777 = bl_phones # {'VALUE': bl_phones}
-        UF_CRM_1755263856 = bl_emails # {'VALUE': bl_emails}
+        UF_CRM_1755263777 = str(bl_phones)
+        UF_CRM_1755263856 = str(bl_emails)
 
         UF_CRM_1703235529 = 896 if len(case.respondent.inn) == 12 else 898
         if type(rights) == bool:
