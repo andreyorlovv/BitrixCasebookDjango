@@ -142,7 +142,7 @@ class Casebook:
             self.headless_auth()
         
     def get_cases(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True, filter_id=None,
-                  scan_or=False, ignore_other_tasks_processed=False, task_id=None):
+                  scan_or=False, ignore_other_tasks_processed=False, task_id=None, judj_check=False):
         import ast
         serialized = None
         i = 0
@@ -242,7 +242,7 @@ class Casebook:
                 except Exception as e:
                     pass
 
-            if filter_id == 749741:
+            if judj_check:
                 if self._check_for_judjorders(case['caseNumber']): pass
                 else:
                     models.Case.objects.create(
