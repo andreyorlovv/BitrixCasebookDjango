@@ -622,7 +622,7 @@ class Casebook:
                     court=case['instancesInternal'][0]['court'],
                     url=f'https://casebook.ru/card/case/{case["caseId"]}',
                     number=case['caseNumber'],
-                    reg_date=datetime.fromisoformat(case['startDate']).date(),
+                    reg_date=datetime.datetime.fromisoformat(case['startDate']).date(),
                     _type={
                         "caseTypeM": case['caseTypeMCode'],
                         "caseTypeENG": case['caseType']
