@@ -251,7 +251,13 @@ class BitrixConnect:
                 "ASSIGNED_BY_ID": 1690,
                 "UF_CRM_1759395470157": UF_CRM_1755263777,
                 "UF_CRM_1759395435927": UF_CRM_1755263856,
+
             }}
+        if case.case_type is not None:
+            items["fields"]['UF_CRM_1765382316'] = case.case_type
+        if case.case_category is not None:
+            items["fields"]['UF_CRM_1765382357'] = case.case_category
+
 
         result = self.bitrix.call('crm.lead.add',
                                items=items)
