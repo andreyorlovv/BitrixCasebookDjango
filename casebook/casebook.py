@@ -366,6 +366,10 @@ class Casebook:
 
             response = http_client.request('POST', 'https://casebook.ru/api/Account/LogOn', f'{body}')
 
+            if os.environ.get('local_debug') == 'True':
+                print(body)
+                print(response.headers)
+
             asp_token = re.search(r"(?<=ASPXAUTH=)[^;]+", response.headers['Set-Cookie']).group()
 
             sps_user_id = re.search(r"(?<=SpsUserId=)[^;]+", response.headers['Set-Cookie']).group()
@@ -524,16 +528,27 @@ class Casebook:
                     pass
 
             if judj_check:
-                if self._check_for_judjorders(case['caseNumber']): pass
-                else:
+                try:
+                    if self._check_for_judjorders(case['caseId']): pass
+
+                    else:
+                        models.Case.objects.create(
+                            process_date=datetime.datetime.now(),
+                            case_id=case['caseNumber'],
+                            is_success=False,
+                            error_message='Не является судебным приказом, отфильтровано',
+                            from_task=Filter.objects.get(filter_id=filter_id)
+                        )
+                        cases.remove(case)
+                except JSONDecodeError as e:
                     models.Case.objects.create(
                         process_date=datetime.datetime.now(),
                         case_id=case['caseNumber'],
                         is_success=False,
-                        error_message='Не является судебным приказом, отфильтровано',
+                        error_message=f'Ошибка проверки СП',
                         from_task=Filter.objects.get(filter_id=filter_id)
+
                     )
-                    cases.remove(case)
 
         cases_to_process = []
         for case in cases:
@@ -743,7 +758,8 @@ class Casebook:
             for event in events:
                 for content in event['contentTypes']:
                     if re.search(r'.*судебн.*приказ', content['value']): return True
-        else: return False
+        else:
+            return False
 
 if __name__ == '__main__':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BitrixCasebook.settings')
