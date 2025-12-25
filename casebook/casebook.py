@@ -628,6 +628,19 @@ class Casebook:
                                 )
                                 raise GetOutOfLoop
                 if to_load == 1: plaintiff, respondent = respondent, plaintiff
+
+                case_category = None
+                case_type = None
+
+                try:
+                    case_category = codes[case['statCategoryIds'][0]]['id']
+                except KeyError:
+                    pass
+                try:
+                    case_type = types[case['caseTypeMCode']]
+                except KeyError:
+                    pass
+
                 case_ = Case(
                     plaintiff=plaintiff,
                     respondent=respondent,
@@ -640,8 +653,8 @@ class Casebook:
                         "caseTypeENG": case['caseType']
                     },
                     sum_=case['claimSum'],
-                    case_category=codes[case['statCategoryIds'][0]]['id'],
-                    case_type=types[case['caseTypeMCode']]
+                    case_category=case_category,
+                    case_type=case_type
                 )
                 result.append(case_)
             except UnboundLocalError:
