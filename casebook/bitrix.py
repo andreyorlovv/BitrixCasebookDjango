@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from types import NoneType
 from xmlrpc.client import FastParser
@@ -106,6 +107,22 @@ courts = {
 class EmptyINN(Exception):
     pass
 
+class LocalPlaceholderB24:
+
+    """
+    Для локального дебаггинга
+    """
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+    def call(self, method, items, **kwargs):
+        self.logger.debug("calling method %s with items %s \n **kwargs = %s" % (method, items, kwargs))
+
+    def get_all(self, method, **kwargs):
+        self.logger.debug("calling method %s with kwargs %s" % (method, kwargs))
+
+
+
 
 import logging
 
@@ -113,6 +130,8 @@ logging.getLogger('fast_bitrix24').setLevel('INFO')
 
 class BitrixConnect:
     def __init__(self, webhook='https://crm.yk-cfo.ru/rest/1690/eruxj0nx7ria5j0q/'):
+        if os.environ.get('local_debug') == 'True':
+            self.bitrix = LocalPlaceholderB24()
         self.bitrix = Bitrix(webhook)
     def create_lead(self, case: Case, rights, filter_id):
         emails = []
@@ -150,7 +169,7 @@ class BitrixConnect:
         elif type(rights) == str:
             UF_CRM_1703234971 = rights
         else:
-            UF_CRM_1703234971 = False
+            UF_CRM_1703234971 = 894
         # UF_CRM_1703235529 = "Исключительные права" if rights else "Неисключительные права"
         # UF_CRM_1703234971 = "Ответчик - ИП" if len(case.respondent.inn) == 12 else "Ответчик - ООО"
         from casebook.contacts_v2 import get_name

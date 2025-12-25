@@ -24,10 +24,10 @@ def get_tasks_from_db():
     tasks = Tasks.objects.all()
     for task in tasks:
         if task.last_execution is None:
-            scan_enchanted.apply_async(args=[task.id], retry=False, expires=2500)
+            scan_enchanted.apply_async(args=[task.id], retry=False, expires=6200)
         elif int((task.last_execution - datetime.datetime.now(
                 tz=datetime.timezone.utc)).seconds % 3600 / 60.0) > task.iteration_interval:
-            scan_enchanted.apply_async(args=[task.id], retry=False, expires=2500)
+            scan_enchanted.apply_async(args=[task.id], retry=False, expires=6200)
 
 
 @shared_task
@@ -139,12 +139,12 @@ def scan_enchanted(task_id):
                 )
     task.last_execution = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
     task.save()
-    scan_enchanted.apply_async(
-        args=[task.id],
-        eta=(datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(minutes=task.iteration_interval)),
-        retry=False,
-        expires=7200
-    )
+    # scan_enchanted.apply_async(
+    #     args=[task.id],
+    #     eta=(datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(minutes=task.iteration_interval)),
+    #     retry=False,
+    #     expires=7200
+    # )
 
 
 @shared_task

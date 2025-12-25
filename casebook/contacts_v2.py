@@ -1,5 +1,6 @@
 import datetime
 import json
+import os
 from typing import Tuple, List, Any
 
 import requests
@@ -135,6 +136,12 @@ def process_listorg(ogrn, inn):
 
 
 def get_contacts(inn, ogrn):
+    if os.environ.get('local_debug') == 'True':
+        return {'numbers': [],
+                'emails': [],
+                'blacklist_numbers': [],
+                'blacklist_emails': []}
+
     number_list = []
     email_list = []
     try:
@@ -184,6 +191,13 @@ def get_contacts(inn, ogrn):
 
 
 def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
+
+    if os.environ.get('local_debug'):
+        return {'numbers': [],
+                'emails': [],
+                'blacklist_numbers': [],
+                'blacklist_emails': []}
+
     gc = get_contacts(inn, ogrn)
     
     number_list = gc.get('numbers')

@@ -678,7 +678,7 @@ class Casebook:
         return result['items'][0]
 
     def get_instances(self, id_):
-        self.headless_auth()
+        # self.headless_auth()
 
         response = self.http_client.request('POST', 'https://casebook.ru/ms/CaseCard/api/v1/Instance/List',
                                             body=f'''

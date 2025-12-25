@@ -1,6 +1,8 @@
 import datetime
 import io
 import json
+import os
+
 import xlsxwriter
 
 from django.contrib.admin import site
@@ -54,10 +56,14 @@ def custom_index(request):
     try:
         remaining_export_base = requests.get(f'https://export-base.ru/api/balance/?key={settings.EXPORT_BASE_API_KEY}')
         remaining_export_base.raise_for_status()
+        remaining_export_base = remaining_export_base.text
     except SSLError as e:
         remaining_export_base = 'Ошибка в подключении к ЭкспортБейс, СВЯЖИТЕСЬ С РАЗРАБОТЧИКОМ, СКОРЕЕ ВСЕГО ПРОБЕЛМА ЕСТЬ И В ПОЛУЧЕНГИИ КОНТАКТНЫХ ДАННЫХ!!!!'
+    except Exception as e:
+        if os.environ.get('local_debug') == 'True':
+            remaining_export_base = 'Локальное окружение, взаимодействия с ExportBase отключено'
     extra_context = {'filters': filters, 'form_create': form_create,
-                     'tasks': tasks_to_render, 'remaining_export_base': remaining_export_base.text}
+                     'tasks': tasks_to_render, 'remaining_export_base': remaining_export_base}
     return site.index(request, extra_context=extra_context)
 
 
