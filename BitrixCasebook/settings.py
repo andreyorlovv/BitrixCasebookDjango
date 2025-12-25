@@ -43,7 +43,7 @@ EXPORT_BASE_API_KEY = os.getenv('EXPORT_BASE_API_KEY')
 CELERY_TIMEZONE = "Europe/Moscow"
 CELERY_TASK_TRACK_STARTED = True
 
-CELERY_BROKER_URL = f"redis://{os.getenv('REDIS_HOST', 'redis')}:6379"
+CELERY_BROKER_URL = f"amqp://{os.getenv('AMQP_USER', 'guest')}:{os.getenv('AMQP_PASS', 'guest')}@{os.getenv('AMQP_HOST', 'rabbitmq')}:5672"
 CELERY_RESULT_BACKEND = f"redis://{os.getenv('REDIS_HOST', 'redis')}:6379"
 
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"

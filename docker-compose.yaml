@@ -21,6 +21,16 @@ services:
     networks:
       - djangonetwork
 
+  rabbitmq:
+    hostname: rabbitmq
+    image: rabbitmq:4.2-management
+    command: rabbitmq-server
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - djangonetwork
+
   redis:
     restart: always
     image: redis:6.2.14-alpine
