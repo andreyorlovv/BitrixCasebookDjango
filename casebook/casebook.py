@@ -480,7 +480,12 @@ class Casebook:
 
             print(f"Статус запроса {page}-ой страницы - {response.status}")
 
-            serialized_page = json.loads(response.data)
+            try:
+                serialized_page = json.loads(response.data)
+            except json.decoder.JSONDecodeError as e:
+                for case in serialized_page['result']['items']:
+                    cases.append(case)
+                break
 
             for case in serialized_page['result']['items']:
                 cases.append(case)
@@ -663,7 +668,7 @@ class Casebook:
 
         return result['items'][0]
 
-    def get_instances(self, id_):
+    def get_instances(self, id_, recursion = 0):
         # self.headless_auth()
 
         response = self.http_client.request('POST', 'https://casebook.ru/ms/CaseCard/api/v1/Instance/List',
@@ -685,8 +690,12 @@ class Casebook:
                                                 "page": 1,
                                                 "count": 100
                                             }}''')
-
-        items = json.loads(response.data.decode('utf-8'))['items']
+        try:
+            items = json.loads(response.data.decode('utf-8'))['items']
+        except json.decoder.JSONDecodeError:
+            self.headless_auth()
+            if recursion >= 5: return None
+            else: return self.get_instances(id_, recursion + 1)
 
         result = []
 
@@ -702,7 +711,7 @@ class Casebook:
 
         return result
 
-    def get_history(self, case_id, instance_id):
+    def get_history(self, case_id, instance_id, recursion = 0):
         self.headless_auth()
 
         response = self.http_client.request('POST', 'https://casebook.ru/ms/CaseCard/api/v1/Event/List', body=f'''
@@ -734,7 +743,13 @@ class Casebook:
                                                                 ]
                                                             }}
                                                             ''')
-        serialized = json.loads(response.data.decode('utf-8'))['items']
+        try:
+            serialized = json.loads(response.data.decode('utf-8'))['items']
+        except json.decoder.JSONDecodeError:
+            self.headless_auth()
+            if recursion >= 5: return None
+            else: return self.get_history(case_id, instance_id, recursion + 1)
+
         return serialized
 
     def _check_for_judjorders(self, case_id):
