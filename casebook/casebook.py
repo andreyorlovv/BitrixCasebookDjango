@@ -501,6 +501,7 @@ class Casebook:
                         error_message=f'Сумма дела меньше целевой: {cash} > {case["claimSum"]}',
                         from_task=Filter.objects.get(filter_id=filter_id),
                     )
+                    cases.remove(case)
             if len(case['sides']) > 2:
                 _respondent = 0
                 _plaintiff = 0
