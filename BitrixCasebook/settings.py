@@ -48,6 +48,8 @@ CELERY_RESULT_BACKEND = f"redis://{os.getenv('REDIS_HOST', 'redis')}:6379"
 
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
+broker_heartbeat = 3600
+
 CELERY_IMPORTS = [
     'casebook.tasks',
 ]
