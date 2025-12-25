@@ -528,6 +528,18 @@ class Casebook:
                 except Exception as e:
                     pass
 
+
+
+        cases_to_process = []
+        for case in cases:
+            if not CaseModel.objects.filter(case_id=case['caseNumber']).exists():
+                cases_to_process.append(case)
+            elif not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists() and ignore_other_tasks_processed:
+                    cases_to_process.append(case)
+        cases = cases_to_process
+        company_black_list = BlackList.objects.filter(type='inn')
+        for case in cases:
+
             if judj_check:
                 if self._check_for_judjorders(case['caseId']):
                     pass
@@ -540,16 +552,8 @@ class Casebook:
                         from_task=Filter.objects.get(filter_id=filter_id)
                     )
                     cases.remove(case)
+                    continue
 
-        cases_to_process = []
-        for case in cases:
-            if not CaseModel.objects.filter(case_id=case['caseNumber']).exists():
-                cases_to_process.append(case)
-            elif not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists() and ignore_other_tasks_processed:
-                    cases_to_process.append(case)
-        cases = cases_to_process
-        company_black_list = BlackList.objects.filter(type='inn')
-        for case in cases:
             try:
                 plaintiff = None
                 respondent = None
