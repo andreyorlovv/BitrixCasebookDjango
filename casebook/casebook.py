@@ -524,7 +524,8 @@ class Casebook:
                     pass
 
             if judj_check:
-                if self._check_for_judjorders(case['caseNumber']): pass
+                if self._check_for_judjorders(case['caseId']):
+                    pass
                 else:
                     models.Case.objects.create(
                         process_date=datetime.datetime.now(),
