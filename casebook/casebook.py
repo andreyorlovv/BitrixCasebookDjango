@@ -553,7 +553,7 @@ class Casebook:
                         error_message='Не является судебным приказом, отфильтровано',
                         from_task=Filter.objects.get(filter_id=filter_id)
                     )
-                    cases.remove(case)
+                    
                     continue
 
             try:
@@ -656,6 +656,16 @@ class Casebook:
                     case_category=case_category,
                     case_type=case_type
                 )
+                if cash and case_.sum_ < cash:
+                    import casebook
+                    models.Case.objects.create(
+                        process_date=datetime.datetime.now(),
+                        case_id=case['caseNumber'],
+                        is_success=False,
+                        error_message=f'Сумма дела меньше целевой: {cash} > {case_.sum_}',
+                        from_task=Filter.objects.get(filter_id=filter_id),
+                    )
+                    continue
                 result.append(case_)
             except UnboundLocalError:
                 models.Case.objects.create(
