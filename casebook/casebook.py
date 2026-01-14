@@ -431,10 +431,12 @@ class Casebook:
             try:
                 if filter__['filter']['type'] == 'CaseStartDate':
                     if start_date:
+                        from_date = (datetime.datetime.now().date() - datetime.timedelta(days=start_date))
                         filter_['items'][i]['filter']['value'] = {
-                        'from': start_date.date().strftime('%Y-%m-%d'),
-                        'to': (start_date.date().strftime('%Y-%m-%d') + - datetime.timedelta(days=timedelta)).strftime(
-                            '%Y-%m-%d')}
+                        'from': from_date.strftime(
+                            '%Y-%m-%d'),
+                        'to': (from_date + datetime.timedelta(days=timedelta)).strftime('%Y-%m-%d')
+                        }
                     else:
                         filter_['items'][i]['filter']['value'] = {
                         'from': (datetime.datetime.now().date() - datetime.timedelta(days=timedelta)).strftime(

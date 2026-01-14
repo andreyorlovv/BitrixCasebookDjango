@@ -43,7 +43,7 @@ class StopList(models.Model):
 
 
 class Tasks(models.Model):
-    start_date = models.DateField(verbose_name='Начало сканирования (текущее время, если не задано)', null=True, blank=True, default=None)
+    start_date = models.IntegerField(verbose_name='Начало сканирования (текущее время, если не задано)', null=True, blank=True, default=None)
     days_expire = models.IntegerField(verbose_name='Кол-во дней давности')
     iteration_interval = models.IntegerField(verbose_name='Интервал выполнения задачи (in dev)')
     filter_id = models.CharField(max_length=64, verbose_name='ID фильтра')

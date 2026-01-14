@@ -54,9 +54,14 @@ def custom_index(request):
         })
     import requests
     try:
-        remaining_export_base = requests.get(f'https://export-base.ru/api/balance/?key={settings.EXPORT_BASE_API_KEY}')
+        remaining_export_base = requests.get(
+            f'https://export-base.ru/api/balance/?key={settings.EXPORT_BASE_API_KEY}',
+            timeout=15
+        )
         remaining_export_base.raise_for_status()
         remaining_export_base = remaining_export_base.text
+    except requests.exceptions.Timeout:
+        remaining_export_base = 'Ошибка в подключении к ЭкспортБейс (timeout), СВЯЖИТЕСЬ С РАЗРАБОТЧИКОМ!'
     except SSLError as e:
         remaining_export_base = 'Ошибка в подключении к ЭкспортБейс, СВЯЖИТЕСЬ С РАЗРАБОТЧИКОМ, СКОРЕЕ ВСЕГО ПРОБЕЛМА ЕСТЬ И В ПОЛУЧЕНГИИ КОНТАКТНЫХ ДАННЫХ!!!!'
     except Exception as e:
@@ -70,7 +75,12 @@ def custom_index(request):
 @login_required(login_url='/login/')
 def process_task(request):
     task_id = request.GET.get('task_id')
-    casebook.tasks.scan_enchanted.apply_async(args=(task_id,), expires=600)
+    casebook.tasks.scan_enchanted.apply_async(
+        args=(task_id,),
+        expires=7200,  # 2 hours
+        soft_time_limit=6600,  # 1 hour 50 minutes - soft limit
+        time_limit=7200  # 2 hours - hard limit
+    )
     return redirect('/')
 
 
