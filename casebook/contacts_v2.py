@@ -65,7 +65,7 @@ def process_checko_phone(ogrn):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"
     }
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=15)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         phone_pattern = re.compile(r'\+7 \d{3} \d{3}-\d{2}-\d{2}')
@@ -78,7 +78,7 @@ def process_checko_email(ogrn):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"
     }
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=15)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         email_pattern = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
@@ -94,7 +94,7 @@ def get_name(ogrn: str) -> str:
         'User-Agent': 'Mozila/5.0(Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/91.0.4472.124 Safari/537.36'}
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=15)
         soup2 = BeautifulSoup(response.text, "html.parser")
         dom = etree.HTML(str(soup2))
         return dom.xpath("/html/body/main/div[2]/div/article/div/div[4]/div[2]/div[1]/div/div[2]/a")[0].text
@@ -120,7 +120,7 @@ def process_listorg(ogrn, inn):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"
     }
-    response = requests.get(f"https://www.list-org.com/search?val={ogrn}&type=all&sort=", headers=headers)
+    response = requests.get(f"https://www.list-org.com/search?val={ogrn}&type=all&sort=", headers=headers, timeout=15)
     soup = BeautifulSoup(response.text, 'html.parser')
     company_tag = soup.find('a', href=lambda x: x and '/company/' in x)  # , name=lambda x: x and '/company/' in x)
     if company_tag:
@@ -128,7 +128,7 @@ def process_listorg(ogrn, inn):
         full_link = f"https://www.list-org.com{company_link}"  # Формируем полный URL
     else:
         return None
-    response = requests.get(full_link, headers=headers)
+    response = requests.get(full_link, headers=headers, timeout=15)
     soup = BeautifulSoup(response.text, 'html.parser')
     pattern = re.compile(r"\+7\s?\(?\d{3,5}\)?\s?\d{1,3}-\d{2}-\d{2}")
     phones = pattern.findall(soup.text)
@@ -213,8 +213,11 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         url = f'https://export-base.ru/api/company/?inn={inn}&ogrn={ogrn}&key={key}'
 
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=30)  # 30 seconds timeout
         response.raise_for_status()
+    except requests.exceptions.Timeout:
+        print(f"Timeout getting contacts from export-base for inn={inn}, ogrn={ogrn}")
+        return get_contacts(ogrn=ogrn, inn=inn)
     except SSLError as e:
         print(e)
 

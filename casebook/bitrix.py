@@ -1,13 +1,13 @@
+import logging
 import os
 from datetime import datetime
-from types import NoneType
-from xmlrpc.client import FastParser
 
 from dateutil import parser
 from fast_bitrix24 import Bitrix
 
 from .casebook import Case
-from .models import Filter
+from .contacts_v2 import get_name
+from .models import Case as CaseModel, Filter
 
 courts = {
     'АС Алтайского края': '12606',
@@ -122,166 +122,88 @@ class LocalPlaceholderB24:
         self.logger.debug("calling method %s with kwargs %s" % (method, kwargs))
 
 
-
-
-import logging
-
 logging.getLogger('fast_bitrix24').setLevel('INFO')
+
 
 class BitrixConnect:
     def __init__(self, webhook='https://crm.yk-cfo.ru/rest/1690/eruxj0nx7ria5j0q/'):
         if os.environ.get('local_debug') == 'True':
             self.bitrix = LocalPlaceholderB24()
-        self.bitrix = Bitrix(webhook)
+        else:
+            self.bitrix = Bitrix(webhook)
     def create_lead(self, case: Case, rights, filter_id):
-        emails = []
-        phones = []
-
-        bl_emails = ''
-        bl_phones = ''
-        if case.respondent.inn is None or case.respondent.inn == '':
-            from casebook.models import Case as CaseModel
+        if not case.respondent.inn:
             CaseModel.objects.create(
                 process_date=datetime.now(),
                 case_id=case.number,
                 is_success=False,
                 error_message=f'Пустой инн (Для разработчиков -> {case.respondent.inn})',
-                from_task = Filter.objects.get(filter_id=filter_id)
+                from_task=Filter.objects.get(filter_id=filter_id)
             )
             return 'Except'
-        for phone in case.contacts_info['numbers']:
-            phones.append({'VALUE': str(phone), 'VALUE_TYPE': 'WORK'})
-        for email in case.contacts_info['emails']:
-            emails.append({'VALUE': str(email), 'VALUE_TYPE': 'WORK'})
-        for email in case.contacts_info['blacklist_emails']:
-            bl_emails += str(email) + ' | '
-        for phone in case.contacts_info['blacklist_numbers']:
-            bl_phones += str(phone) + ' | '
 
-        UF_CRM_1755263777 = str(bl_phones)
-        UF_CRM_1755263856 = str(bl_emails)
+        phones = [{'VALUE': str(phone), 'VALUE_TYPE': 'WORK'}
+                  for phone in case.contacts_info['numbers']]
+        emails = [{'VALUE': str(email), 'VALUE_TYPE': 'WORK'}
+                  for email in case.contacts_info['emails']]
+        bl_phones = ' | '.join(str(p) for p in case.contacts_info['blacklist_numbers'])
+        bl_emails = ' | '.join(str(e) for e in case.contacts_info['blacklist_emails'])
 
-        UF_CRM_1703235529 = 896 if len(case.respondent.inn) == 12 else 898
-        if type(rights) == bool:
-            UF_CRM_1703234971 = 893 if rights == True else 894
-        elif type(rights) == int:
-            UF_CRM_1703234971 = rights
-        elif type(rights) == str:
-            UF_CRM_1703234971 = rights
+        # Определяем тип ответчика: 896 = ИП, 898 = ООО
+        respondent_type = 896 if len(case.respondent.inn) == 12 else 898
+
+        # Определяем тип прав: 893 = исключительные, 894 = неисключительные
+        if isinstance(rights, bool):
+            rights_type = 893 if rights else 894
+        elif isinstance(rights, (int, str)):
+            rights_type = rights
         else:
-            UF_CRM_1703234971 = 894
-        # UF_CRM_1703235529 = "Исключительные права" if rights else "Неисключительные права"
-        # UF_CRM_1703234971 = "Ответчик - ИП" if len(case.respondent.inn) == 12 else "Ответчик - ООО"
-        from casebook.contacts_v2 import get_name
+            rights_type = 894
+
+        # Базовые поля лида
+        fields = {
+            "TITLE": case.number,
+            "UF_CRM_1703238484214": case.url,
+            "STATUS_ID": "UC_0LLO5N",
+            "COMPANY_TITLE": case.respondent.name,
+            "UF_CRM_1702365701": case.number,
+            "UF_CRM_1702366987": courts.get(case.court),
+            "UF_CRM_1702365740": case.reg_date.isoformat(),
+            "UF_CRM_1702365922": case.plaintiff.name,
+            "UF_CRM_1702365965": case.sum_,
+            "PHONE": phones,
+            "EMAIL": emails,
+            "UF_CRM_1703235529": respondent_type,
+            "UF_CRM_1703234971": rights_type,
+            "UF_CRM_1707995533": case.respondent.inn,
+            "ASSIGNED_BY_ID": 1690,
+            "ADDRESS": case.respondent.address,
+            "UF_CRM_1759395470157": bl_phones,
+            "UF_CRM_1759395435927": bl_emails,
+        }
+
+        # Добавляем ФИО если удалось получить
         name = get_name(case.respondent.ogrn)
-
-
-
-        if type(name) != NoneType:
-            if len(name) < 4:
-                print("Не удалось найти ФИО, проверяем на ИП")
-                if 'Индивидуальный предприниматель' in case.respondent.inn:
-                    items = {"fields": {
-                        "LAST_NAME": case.respondent.name.split()[2],
-                        "NAME": case.respondent.name.split()[3],
-                        "SECOND_NAME": case.respondent.name.split()[4],
-                        "TITLE": case.number,
-                        "UF_CRM_1703238484214": case.url,
-                        "STATUS_ID": "UC_0LLO5N",
-                        "COMPANY_TITLE": case.respondent.name,
-                        "UF_CRM_1702365701": case.number,
-                        "UF_CRM_1702366987": courts.get(case.court),
-                        "UF_CRM_1702365740": case.reg_date.isoformat(),
-                        "UF_CRM_1702365922": f'{case.plaintiff.name}',
-                        "UF_CRM_1702365965": case.sum_,
-                        "PHONE": phones,
-                        "EMAIL": emails,
-                        "UF_CRM_1703235529": UF_CRM_1703235529,
-                        "UF_CRM_1703234971": UF_CRM_1703234971,
-                        "UF_CRM_1707995533": case.respondent.inn,
-                        "ASSIGNED_BY_ID": 1690,
-                        "ADDRESS": case.respondent.address,
-                        "UF_CRM_1759395470157": UF_CRM_1755263777,
-                        "UF_CRM_1759395435927": UF_CRM_1755263856,
-                    }}
-                else:
-                    items = {"fields": {
-                        "TITLE": case.number,
-                        "UF_CRM_1703238484214": case.url,
-                        "STATUS_ID": "UC_0LLO5N",
-                        "COMPANY_TITLE": case.respondent.name,
-                        "UF_CRM_1702365701": case.number,
-                        "UF_CRM_1702366987": courts.get(case.court),
-                        "UF_CRM_1702365740": case.reg_date.isoformat(),
-                        "UF_CRM_1702365922": f'{case.plaintiff.name}',
-                        "UF_CRM_1702365965": case.sum_,
-                        "PHONE": phones,
-                        "EMAIL": emails,
-                        "UF_CRM_1703235529": UF_CRM_1703235529,
-                        "UF_CRM_1703234971": UF_CRM_1703234971,
-                        "UF_CRM_1707995533": case.respondent.inn,
-                        "ASSIGNED_BY_ID": 1690,
-                        "ADDRESS": case.respondent.address,
-                        "UF_CRM_1759395470157": UF_CRM_1755263777,
-                        "UF_CRM_1759395435927": UF_CRM_1755263856,
-                    }}
-            else:
+        if name is not None:
+            if len(name) >= 4:
                 full_name = name.split(' ')
-                items = {"fields": {
-                    "TITLE": case.number,
-                    "UF_CRM_1703238484214": case.url,
-                    "STATUS_ID": "UC_0LLO5N",
-                    "COMPANY_TITLE": case.respondent.name,
-                    "UF_CRM_1702365701": case.number,
-                    "UF_CRM_1702366987": courts.get(case.court),
-                    "UF_CRM_1702365740": case.reg_date.isoformat(),
-                    "UF_CRM_1702365922": f'{case.plaintiff.name}',
-                    "UF_CRM_1702365965": case.sum_,
-                    "PHONE": phones,
-                    "EMAIL": emails,
-                    "UF_CRM_1703235529": UF_CRM_1703235529,
-                    "UF_CRM_1703234971": UF_CRM_1703234971,
-                    "UF_CRM_1707995533": case.respondent.inn,
-                    "ASSIGNED_BY_ID": 1690,
-                    "LAST_NAME": full_name[0],
-                    "NAME": full_name[1],
-                    "SECOND_NAME": full_name[2],
-                    "ADDRESS": case.respondent.address,
-                    "UF_CRM_1759395470157": UF_CRM_1755263777,
-                    "UF_CRM_1759395435927": UF_CRM_1755263856,
-                }}
-        else:
-            items = {"fields": {
-                "TITLE": case.number,
-                "UF_CRM_1703238484214": case.url,
-                "STATUS_ID": "UC_0LLO5N",
-                "COMPANY_TITLE": case.respondent.name,
-                "UF_CRM_1702365701": case.number,
-                "UF_CRM_1702366987": courts.get(case.court),
-                "UF_CRM_1702365740": case.reg_date.isoformat(),
-                "UF_CRM_1702365922": f'{case.plaintiff.name}',
-                "UF_CRM_1702365965": case.sum_,
-                "PHONE": phones,
-                "EMAIL": emails,
-                "UF_CRM_1703235529": UF_CRM_1703235529,
-                "UF_CRM_1703234971": UF_CRM_1703234971,
-                "UF_CRM_1707995533": case.respondent.inn,
-                "ADDRESS": case.respondent.address,
-                "ASSIGNED_BY_ID": 1690,
-                "UF_CRM_1759395470157": UF_CRM_1755263777,
-                "UF_CRM_1759395435927": UF_CRM_1755263856,
+                if len(full_name) >= 3:
+                    fields["LAST_NAME"] = full_name[0]
+                    fields["NAME"] = full_name[1]
+                    fields["SECOND_NAME"] = full_name[2]
+            elif 'Индивидуальный предприниматель' in case.respondent.name:
+                name_parts = case.respondent.name.split()
+                if len(name_parts) >= 5:
+                    fields["LAST_NAME"] = name_parts[2]
+                    fields["NAME"] = name_parts[3]
+                    fields["SECOND_NAME"] = name_parts[4]
 
-            }}
         if case.case_type is not None:
-            items["fields"]['UF_CRM_1765382316'] = case.case_type
+            fields['UF_CRM_1765382316'] = case.case_type
         if case.case_category is not None:
-            items["fields"]['UF_CRM_1765382357'] = case.case_category
+            fields['UF_CRM_1765382357'] = case.case_category
 
-
-        result = self.bitrix.call('crm.lead.add',
-                               items=items)
-
-
+        result = self.bitrix.call('crm.lead.add', items={"fields": fields})
         return result
 
     def delete_lead(self, lead_id):
@@ -322,3 +244,4 @@ class BitrixConnect:
                                           'COMMENT': comment + ' \n ' + file,
                                       }
                                   })
+        return result
