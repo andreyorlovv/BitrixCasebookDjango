@@ -126,7 +126,7 @@ logging.getLogger('fast_bitrix24').setLevel('INFO')
 
 
 class BitrixConnect:
-    def __init__(self, webhook='https://crm.yk-cfo.ru/rest/2695/2anrp7lhn097w1q9/'):
+    def __init__(self, webhook='https://crm.yk-cfo.ru/rest/782/rl70y07llnky74jv/'):
         if os.environ.get('local_debug') == 'True':
             self.bitrix = LocalPlaceholderB24()
         else:
