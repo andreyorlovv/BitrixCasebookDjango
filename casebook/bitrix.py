@@ -103,6 +103,15 @@ courts = {
 }
 
 
+FILTERS_B24 = {
+558875: 22314,
+795010: 22315,
+515745: 22316,
+749741: 22317,
+791315: 22318,
+610674: 22319
+}
+
 
 class EmptyINN(Exception):
     pass
@@ -180,6 +189,7 @@ class BitrixConnect:
             "ADDRESS": case.respondent.address,
             "UF_CRM_1759395470157": bl_phones,
             "UF_CRM_1759395435927": bl_emails,
+            "UF_CRM_1768373813": FILTERS_B24[filter_id],
         }
 
         # Добавляем ФИО если удалось получить
