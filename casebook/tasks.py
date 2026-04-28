@@ -96,21 +96,7 @@ def scan_enchanted(self, task_id):
 
         from casebook.casebook import Casebook
 
-        # Аутентификация с повторами
-        max_auth_retries = 3
-        casebook = None
-        for attempt in range(max_auth_retries):
-            try:
-                casebook = Casebook(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
-                casebook.headless_auth(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
-                logger.info(f"Authentication successful on attempt {attempt + 1}")
-                break
-            except Exception as e:
-                logger.error(f"Auth attempt {attempt + 1} failed: {e}")
-                if attempt == max_auth_retries - 1:
-                    logger.error(f"Authentication failed after {max_auth_retries} attempts")
-                    raise
-                time.sleep(5)
+        casebook = Casebook(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
 
         bitrix = BitrixConnect(webhook=settings.BITRIX_CALLBACK)
 
