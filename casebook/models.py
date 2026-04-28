@@ -109,5 +109,5 @@ class InfoDealB24(models.Model):
 
 
 class RequestCounter(models.Model):
-    date = models.DateField(verbose_name='Дата')
+    date = models.DateField(verbose_name='Дата', unique=True)
     count = models.BigIntegerField(verbose_name='Количество запросов', null=True, blank=True)

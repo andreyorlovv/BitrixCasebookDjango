@@ -355,7 +355,7 @@ class Casebook:
                 login = self.login
                 password = self.password
 
-            counter = RequestCounter.objects.get(date=datetime.date.today())
+            counter = RequestCounter.objects.get_or_create(date=datetime.date.today())
 
             if counter.count >= self.limit - 40:
                 print('Остаток запросов мал, обработку не начинаем')
