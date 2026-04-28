@@ -106,3 +106,8 @@ class InfoDealB24(models.Model):
     class Meta:
         verbose_name = 'Справочник для обновления КАД'
         verbose_name_plural = 'Справочник для обновления КАД'
+
+
+class RequestCounter(models.Model):
+    date = models.DateField(verbose_name='Дата')
+    count = models.BigIntegerField(verbose_name='Количество запросов', null=True, blank=True)

@@ -12,7 +12,7 @@ from django.conf import settings
 from requests import JSONDecodeError
 
 from casebook import models
-from casebook.models import StopList, BlackList, Filter
+from casebook.models import StopList, BlackList, Filter, RequestCounter
 from casebook.models import Case as CaseModel
 
 codes = {
@@ -345,6 +345,8 @@ class Casebook:
         self.headless_auth(login, password)
         self.http_client.headers.update(self.headers)
 
+        self.limit = 1400
+
         # self.get_filters()
 
     def headless_auth(self, login: str = None, password: str = None):
@@ -353,36 +355,40 @@ class Casebook:
                 login = self.login
                 password = self.password
 
+            counter = RequestCounter.objects.get(date=datetime.date.today())
+
+            if counter.count >= self.limit - 40:
+                print('Остаток запросов мал, обработку не начинаем')
+
             body = f'''
                         {{
-                            "systemName": "Sps",
-                            "userName": "{login}",
-                            "password": "{password}"
+                            "email": "{login}",
+                            "password": "{password}",
+                            "rememberMe": true
                         }}
                         '''
 
             http_client.headers.update({'Content-Type': 'application/json',
                                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.5993.2470 YaBrowser/23.11.0.2470 Yowser/2.5 Safari/537.36'})
 
-            response = http_client.request('POST', 'https://casebook.ru/api/Account/LogOn', f'{body}')
+            response = http_client.request('POST', 'https://casebook.ru/ms/Account/v3/JSONLogOn', f'{body}')
 
-            asp_token = re.search(r"(?<=ASPXAUTH=)[^;]+", response.headers['Set-Cookie']).group()
+            asp_token = re.search(r"(?<=ASPXAUTH=)[^;]+", response.headers['set-cookie']).group()
 
-            sps_user_id = re.search(r"(?<=SpsUserId=)[^;]+", response.headers['Set-Cookie']).group()
+            sps_user_id = response.json()['result']['login']
 
-            mlr_session = re.search(r"(?<=MLR_Session=)[^;]+", response.headers['Set-Cookie']).group()
-
+            mlr_session = re.search(r"(?<=MLR_Session=)[^;]+", response.headers['set-cookie']).group()
 
             response_token = http_client.request('GET',
                                                  f'https://casebook.ru/ms/webassembly/Wasm/api/v1/protection.js?_={round(time.time() * 1000)}',
                                                  headers={
-                                                     'Cookie': response.headers['Set-Cookie']
+                                                     'Cookie': response.headers['set-cookie']
                                                  })
 
             print("Статус запроса JWT токена = " + str(response_token.status))
 
             token_list = response_token.headers['set-cookie'].split(';')
-            
+
             token = None
 
             for line in token_list:
@@ -393,6 +399,10 @@ class Casebook:
                 raise Exception('Не получили JWT токен от кейсбука')
 
             # token = response_token.headers['set-cookie'].split(';')[0].split('=')[1]
+
+            counter = RequestCounter.objects.get(date=datetime.date.today())
+            counter.count += 1
+            counter.save()
 
             self.auth_token = token
             self.auth_email = login
@@ -409,18 +419,15 @@ class Casebook:
             }
 
     def get_filters(self):
-        self.headless_auth()
         response = self.http_client.request('GET', 'https://casebook.ru/ms/UserData/SavedSearch/List',
                                             headers=self.headers)
         
-        try:
-            serialized = json.loads(response.data)
-            self.filters = [
-            {"name": filter_['name'], "id": filter_["id"], "filter": json.loads(filter_['serializedRequest'])}
-            for filter_ in serialized['result']]
-            return self.filters
-        except json.decoder.JSONDecodeError:
-            self.headless_auth()
+        serialized = json.loads(response.data)
+        self.filters = [
+        {"name": filter_['name'], "id": filter_["id"], "filter": json.loads(filter_['serializedRequest'])}
+        for filter_ in serialized['result']]
+        return self.filters
+
         
     def get_cases(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True, filter_id=None,
                   scan_or=False, ignore_other_tasks_processed=False, task_id=None, judj_check=False, start_date=None):
@@ -460,6 +467,9 @@ class Casebook:
                                                 .replace('False', 'false'),
                                                 headers=self.headers)
 
+            counter = RequestCounter.objects.get(date=datetime.date.today())
+            counter.count += 1
+            counter.save()
 
             print(f"Статус запроса кол-ва страниц - {response.status}")
             serialized = json.loads(response.data)
@@ -486,6 +496,13 @@ class Casebook:
                                                 headers=self.headers)
 
             print(f"Статус запроса {page}-ой страницы - {response.status}")
+
+            counter = RequestCounter.objects.get(date=datetime.date.today())
+            if counter.count >= self.limit:
+                print('Приближаемся к лимиту запросов')
+                break
+            counter.count += 1
+            counter.save()
 
             try:
                 serialized_page = json.loads(response.data)
@@ -792,9 +809,8 @@ class Casebook:
 if __name__ == '__main__':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BitrixCasebook.settings')
 
-    login = os.environ.get('CASEBOOK_LOGIN')
-    password = os.environ.get('CASEBOOK_PASSWORD')
-
+    login = 'director@yk-cfo.ru' # os.environ.get('CASEBOOK_LOGIN')
+    password = 'Lexbaltic777' # os.environ.get('CASEBOOK_PASSWORD')
     casebook_api = Casebook(login, password)
 
     print(casebook_api.get_filters())
