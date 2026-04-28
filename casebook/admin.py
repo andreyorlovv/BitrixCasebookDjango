@@ -40,6 +40,8 @@ class StopListAdmin(admin.ModelAdmin):
     list_display = ('id', 'stopword')
     ordering = ('id',)
 
+class RequestCounterAdmin(admin.ModelAdmin):
+    list_display = ('id', 'date', 'count')
 
 class BlackListAdmin(admin.ModelAdmin):
     list_display = ('value', 'type')
