@@ -332,6 +332,7 @@ class BlackListException(Exception):
 
 class Casebook:
     def __init__(self, login, password):
+        self.limit = 1400
         self.headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ('
                                       'KHTML, like Gecko) Chrome/118.0.5993.2470 '
                                       'YaBrowser/23.11.0.2470'
@@ -345,7 +346,6 @@ class Casebook:
         self.headless_auth(login, password)
         self.http_client.headers.update(self.headers)
 
-        self.limit = 1400
 
         # self.get_filters()
 
