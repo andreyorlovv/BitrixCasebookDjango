@@ -757,8 +757,6 @@ class Casebook:
         return result
 
     def get_history(self, case_id, instance_id, recursion = 0):
-        self.headless_auth()
-
         response = self.http_client.request('POST', 'https://casebook.ru/ms/CaseCard/api/v1/Event/List', body=f'''
                                                             {{
                                                                 "caseId": "{case_id}",
@@ -800,7 +798,7 @@ class Casebook:
     def _check_for_judjorders(self, case_id):
         instances = self.get_instances(case_id)
         for instance in instances:
-            events = self.get_history(case_id, instance['instance_id'])
+            events = self.get_history(case_id, instance['instance_id'], recursion=4)
             for event in events:
                 for content in event['contentTypes']:
                     if re.search(r'.*судебн.*приказ', content['value']): return True
