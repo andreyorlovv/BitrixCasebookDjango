@@ -15,9 +15,9 @@ import urllib3
 from django.conf import settings
 from requests import JSONDecodeError
 
-# from casebook import models
-# from casebook.models import StopList, BlackList, Filter, RequestCounter
-# from casebook.models import Case as CaseModel
+from casebook import models
+from casebook.models import StopList, BlackList, Filter, RequestCounter
+from casebook.models import Case as CaseModel
 
 codes = {
     "1": {"title": "Споры о заключении договоров(контрактов)", "id": 21818},
