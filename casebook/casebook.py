@@ -1,19 +1,23 @@
 import dataclasses
 import datetime
+import io
 import os
 import re
 import sys
 import time
 import json
+import urllib
 from urllib.parse import urlparse
+import base64
+import pandas as pd
 
 import urllib3
 from django.conf import settings
 from requests import JSONDecodeError
 
-from casebook import models
-from casebook.models import StopList, BlackList, Filter, RequestCounter
-from casebook.models import Case as CaseModel
+# from casebook import models
+# from casebook.models import StopList, BlackList, Filter, RequestCounter
+# from casebook.models import Case as CaseModel
 
 codes = {
     "1": {"title": "Споры о заключении договоров(контрактов)", "id": 21818},
@@ -804,14 +808,284 @@ class Casebook:
                     if re.search(r'.*судебн.*приказ', content['value']): return True
         else: return False
 
+    def get_cases_via_excel(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True, filter_id=None,
+                  scan_or=False, ignore_other_tasks_processed=False, task_id=None, judj_check=False, start_date=None):
+        i = 0
+        filter_ = filter_source['filter']
+        for filter__ in filter_['items']:
+            try:
+                if filter__['filter']['type'] == 'CaseStartDate':
+                    if start_date:
+                        from_date = (datetime.datetime.now().date() - datetime.timedelta(days=start_date))
+                        filter_['items'][i]['filter']['value'] = {
+                            'from': from_date.strftime(
+                                '%Y-%m-%d'),
+                            'to': (from_date + datetime.timedelta(days=timedelta)).strftime('%Y-%m-%d')
+                        }
+                    else:
+                        filter_['items'][i]['filter']['value'] = {
+                            'from': (datetime.datetime.now().date() - datetime.timedelta(days=timedelta)).strftime(
+                                '%Y-%m-%d'),
+                            'to': datetime.datetime.now().date().strftime('%Y-%m-%d')
+                        }
+                else:
+                    i += 1
+            except KeyError:
+                i += 1
+
+        query = {'request': filter_, 'format': 'Csv'}
+
+        json_string = json.dumps(query, ensure_ascii=False, separators=(",", ":"))
+
+        # 2. Кодируем чистый JSON в Base64
+        query_ = base64.b64encode(json_string.encode("utf-8")).decode("utf-8")
+
+        # 3. Готовим заголовки
+        headers = self.headers
+        headers["content-type"] = "application/x-www-form-urlencoded"
+
+        # ВАЖНО: Удаляем ручной content-length!
+        # Если его оставить, он передаст старую неверную длину, и сервер опять обрежет запрос.
+        if "content-length" in headers:
+            del headers["content-length"]
+
+        print(headers)
+
+        # 4. Формируем тело запроса
+        body = urllib.parse.urlencode({"requestString": query_})
+        print(body)
+
+        response = self.http_client.request('POST', 'https://casebook.ru/ms/UserData/Export/CasesSearchFormEncoded',
+                                            body=body,
+                                            headers=headers,
+                                            timeout=80)
+
+        text_data = response.data.decode("windows-1251", errors="ignore")
+
+        df = pd.read_csv(
+            io.BytesIO(response.data), sep=";", encoding="windows-1251", quotechar='"'
+        )
+
+        # Получаем filter_obj один раз для всех операций
+        filter_obj = Filter.objects.get(filter_id=filter_id) if filter_id else None
+
+        # Получаем blacklist INN-ов для быстрой проверки
+        blacklist_inns = set(BlackList.objects.filter(type='inn').values_list('value', flat=True))
+
+        # Загружаем stoplist один раз
+        stoplist = list(StopList.objects.all())
+
+        result = []
+
+        # Предполагаем, что на вход подается датафрейм `df` (вместо списка cases)
+        for index, row in df.iterrows():
+            # Извлекаем базовые данные с защитой от NaN
+            case_number = str(row['Номер дела']).strip() if pd.notna(row['Номер дела']) else "Нет номера"
+            case_url = str(row['Ссылка']).strip() if pd.notna(row['Ссылка']) else ""
+
+            # Пытаемся достать UUID дела из ссылки для judj_check
+            case_id_uuid = case_url.split('/')[-1] if case_url else case_number
+
+            # --- 1. Проверка суммы иска ---
+            claim_sum_raw = row['Исковые требования']
+            try:
+                # Убираем пробелы, меняем запятые на точки на случай строкового формата "277 685,77"
+                if pd.notna(claim_sum_raw) and str(claim_sum_raw).strip():
+                    clean_sum = re.sub(r'[^\d.,]', '', str(claim_sum_raw)).replace(',', '.')
+                    claim_sum = float(clean_sum)
+                else:
+                    claim_sum = 0.0
+            except ValueError:
+                claim_sum = 0.0
+
+            if cash and claim_sum <= cash:
+                if not CaseModel.objects.filter(case_id=case_number, from_task__id=task_id).exists():
+                    models.Case.objects.create(
+                        process_date=datetime.datetime.now(),
+                        case_id=case_number,
+                        is_success=False,
+                        error_message=f'Сумма дела меньше целевой: {cash} > {claim_sum}',
+                        from_task=filter_obj,
+                    )
+                continue
+
+            # --- 2. Проверка количества ответчиков ---
+            # Предполагаем, что если ответчиков несколько, их ИНН идут через запятую или точку с запятой
+            resp_inns_raw = str(row['ИНН Ответчика/Должника']) if pd.notna(row['ИНН Ответчика/Должника']) else ""
+            resp_list = [inn.strip() for inn in re.split(r'[,;\n]', resp_inns_raw) if inn.strip()]
+
+            if len(resp_list) > 1:
+                models.Case.objects.create(
+                    process_date=datetime.datetime.now(),
+                    case_id=case_number,
+                    is_success=False,
+                    error_message='больше одного ответчика, отфильтровано',
+                    from_task=filter_obj
+                )
+                continue
+
+            # --- 3. Проверка на дубликаты (замена фильтрации cases_to_process) ---
+            if CaseModel.objects.filter(case_id=case_number).exists():
+                if not ignore_other_tasks_processed:
+                    continue
+                elif CaseModel.objects.filter(case_id=case_number, from_task__id=task_id).exists():
+                    continue
+
+            # --- 4. Проверка судебного приказа ---
+            if judj_check:
+                if not self._check_for_judjorders(case_id_uuid):
+                    models.Case.objects.create(
+                        process_date=datetime.datetime.now(),
+                        case_id=case_number,
+                        is_success=False,
+                        error_message='Не является судебным приказом, отфильтровано',
+                        from_task=filter_obj
+                    )
+                    continue
+
+            # --- 5. Основной блок обработки ---
+            try:
+                # Извлекаем данные сторон
+                plaintiff_name = str(row['Истец/Кредитор']).strip() if pd.notna(row['Истец/Кредитор']) else ""
+                plaintiff_inn = str(row['ИНН Истца/Кредитора']).strip() if pd.notna(row['ИНН Истца/Кредитора']) else ""
+                plaintiff_ogrn = str(row['ОГРН Истца/Кредитора']).strip() if pd.notna(
+                    row['ОГРН Истца/Кредитора']) else ""
+
+                respondent_name = str(row['Ответчик/Должник']).strip() if pd.notna(row['Ответчик/Должник']) else ""
+                respondent_inn = resp_list[0] if resp_list else ""
+                respondent_ogrn = str(row['ОГРН Ответчика/Должника']).strip() if pd.notna(
+                    row['ОГРН Ответчика/Должника']) else ""
+
+                other_side_name = str(row['Третье лицо/Иное']).strip() if pd.notna(row['Третье лицо/Иное']) else ""
+
+                # В выгрузке нет адреса, ставим заглушку
+                address_stub = "Адрес не передан (табличный формат)"
+
+                plaintiff = Side(name=plaintiff_name, inn=plaintiff_inn, ogrn=plaintiff_ogrn,
+                                 address=address_stub) if plaintiff_name else None
+                respondent = Side(name=respondent_name, inn=respondent_inn, ogrn=respondent_ogrn,
+                                  address=address_stub) if respondent_name else None
+
+                # Проверка Blacklist
+                for inn_to_check in [plaintiff_inn, respondent_inn]:
+                    if inn_to_check and inn_to_check in blacklist_inns:
+                        raise BlackListException(f"{inn_to_check} в черном списке")
+
+                # Проверка Stoplist для Ответчика
+                if respondent and scan_r:
+                    for stopword in stoplist:
+                        if stopword.stopword.upper() in respondent.name.upper():
+                            models.Case.objects.create(
+                                process_date=datetime.datetime.now(),
+                                case_id=case_number,
+                                is_success=False,
+                                error_message=f'Встретилось стоп слово: {stopword.stopword}',
+                                from_task=filter_obj
+                            )
+                            raise GetOutOfLoop
+
+                # Проверка Stoplist для Третьих лиц (Аналог OtherRespondent)
+                if other_side_name and scan_or:
+                    for stopword in stoplist:
+                        if stopword.stopword.upper() in other_side_name.upper():
+                            models.Case.objects.create(
+                                process_date=datetime.datetime.now(),
+                                case_id=case_number,
+                                is_success=False,
+                                error_message=f'Встретилось стоп слово: {stopword.stopword}; type - OtherRespondent (Третье лицо)',
+                                from_task=filter_obj
+                            )
+                            raise GetOutOfLoop
+
+                # Проверка Stoplist для Истца
+                if plaintiff and scan_p:
+                    for stopword in stoplist:
+                        if stopword.stopword.upper() in plaintiff.name.upper():
+                            models.Case.objects.create(
+                                process_date=datetime.datetime.now(),
+                                case_id=case_number,
+                                is_success=False,
+                                error_message=f'Встретилось стоп слово: {stopword.stopword}',
+                                from_task=filter_obj
+                            )
+                            raise GetOutOfLoop
+
+                # Инверсия сторон если требуется
+                if to_load == 1:
+                    plaintiff, respondent = respondent, plaintiff
+
+                # Парсинг даты регистрации
+                reg_date_raw = row['Дата регистрации дела']
+                if pd.notna(reg_date_raw):
+                    if isinstance(reg_date_raw, str):
+                        try:
+                            # Пробуем распарсить разные форматы
+                            if 'T' in reg_date_raw:
+                                reg_date = datetime.datetime.fromisoformat(reg_date_raw.split('T')[0]).date()
+                            else:
+                                reg_date = pd.to_datetime(reg_date_raw).date()
+                        except ValueError:
+                            reg_date = datetime.datetime.now().date()
+                    else:
+                        reg_date = reg_date_raw.date() if hasattr(reg_date_raw,
+                                                                  'date') else datetime.datetime.now().date()
+                else:
+                    reg_date = datetime.datetime.now().date()
+
+                # Формирование объекта Case
+                # Словари codes и types больше не нужны, так как pandas уже содержит понятные названия
+                case_category = str(row['Категория спора']) if pd.notna(row['Категория спора']) else None
+                case_type = str(row['Вид спора']) if pd.notna(row['Вид спора']) else None
+
+                case_ = Case(
+                    plaintiff=plaintiff,
+                    respondent=respondent,
+                    court=str(row['Суд']) if pd.notna(row['Суд']) else "",
+                    url=case_url,
+                    number=case_number,
+                    reg_date=reg_date,
+                    _type={
+                        "caseTypeM": "",  # В плоском файле обычно нет кода M
+                        "caseTypeENG": case_type
+                    },
+                    sum_=claim_sum,
+                    case_category=case_category,
+                    case_type=case_type
+                )
+
+                result.append(case_)
+
+            except BlackListException as e:
+                models.Case.objects.create(
+                    process_date=datetime.datetime.now().date(),
+                    case_id=case_number,
+                    is_success=False,
+                    error_message=f'Ошибка: {e}',
+                    from_task=filter_obj
+                )
+            except GetOutOfLoop:
+                pass
+            except Exception as e:
+                # Универсальный отлов на случай некорректных типов из датафрейма
+                models.Case.objects.create(
+                    process_date=datetime.datetime.now().date(),
+                    case_id=case_number,
+                    is_success=False,
+                    error_message=f'Ошибка обработки DataFrame: {e}',
+                    from_task=filter_obj
+                )
+
+        return result
+
+
 if __name__ == '__main__':
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BitrixCasebook.settings')
-
-    login = 'director@yk-cfo.ru' # os.environ.get('CASEBOOK_LOGIN')
-    password = 'Lexbaltic777' # os.environ.get('CASEBOOK_PASSWORD')
-    casebook_api = Casebook(login, password)
-
-    print(casebook_api.get_filters())
+    # os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BitrixCasebook.settings')
+    #
+    # login = 'director@yk-cfo.ru' # os.environ.get('CASEBOOK_LOGIN')
+    # password = 'Lexbaltic777' # os.environ.get('CASEBOOK_PASSWORD')
+    # casebook_api = Casebook(login, password)
+    #
+    # print(casebook_api.download_excel(json.loads(filter_), 3, to_load=1))
 
     # case = casebook_api.find_case('А29-5940/2025')
     # instances = casebook_api.get_instances(case['id'])
