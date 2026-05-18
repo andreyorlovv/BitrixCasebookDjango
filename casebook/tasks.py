@@ -115,7 +115,8 @@ def scan_enchanted(self, task_id):
             ignore_other_tasks_processed=task.ignore_other_tasks_processed,
             task_id=filter_.id,
             judj_check=task.check_for_judj_orders,
-            start_date=task.start_date
+            start_date=task.start_date,
+            white_list_inn=task.white_list_inn
         )
 
         logger.info(f'Cases retrieved: {len(cases) if cases else 0}')

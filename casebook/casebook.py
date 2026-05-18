@@ -425,7 +425,9 @@ class Casebook:
     def get_filters(self):
         response = self.http_client.request('GET', 'https://casebook.ru/ms/UserData/SavedSearch/List',
                                             headers=self.headers)
-        
+        counter = RequestCounter.objects.get(date=datetime.date.today())
+        counter.count += 1
+        counter.save()
         serialized = json.loads(response.data)
         self.filters = [
         {"name": filter_['name'], "id": filter_["id"], "filter": json.loads(filter_['serializedRequest'])}
@@ -709,6 +711,11 @@ class Casebook:
 
     def find_case(self, case_number):
         response =self.http_client.request('GET', f'https://casebook.ru/ms/Search/Suggest/QuickSearch?query={urlparse(case_number)}')
+
+        counter = RequestCounter.objects.get(date=datetime.date.today())
+        counter.count += 1
+        counter.save()
+
         if response.status == 401:
             self.headless_auth()
             response = self.http_client.request('GET',
@@ -739,6 +746,9 @@ class Casebook:
                                                 "page": 1,
                                                 "count": 100
                                             }}''')
+        counter = RequestCounter.objects.get(date=datetime.date.today())
+        counter.count += 1
+        counter.save()
         try:
             items = json.loads(response.data.decode('utf-8'))['items']
         except json.decoder.JSONDecodeError:
@@ -790,6 +800,9 @@ class Casebook:
                                                                 ]
                                                             }}
                                                             ''')
+        counter = RequestCounter.objects.get(date=datetime.date.today())
+        counter.count += 1
+        counter.save()
         try:
             serialized = json.loads(response.data.decode('utf-8'))['items']
         except json.decoder.JSONDecodeError:
@@ -809,7 +822,7 @@ class Casebook:
         else: return False
 
     def get_cases_via_excel(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True, filter_id=None,
-                  scan_or=False, ignore_other_tasks_processed=False, task_id=None, judj_check=False, start_date=None):
+                  scan_or=False, ignore_other_tasks_processed=False, task_id=None, judj_check=False, start_date=None, white_list_inn: str=None):
         i = 0
         filter_ = filter_source['filter']
         for filter__ in filter_['items']:
@@ -849,16 +862,17 @@ class Casebook:
         if "content-length" in headers:
             del headers["content-length"]
 
-        print(headers)
-
         # 4. Формируем тело запроса
         body = urllib.parse.urlencode({"requestString": query_})
-        print(body)
 
         response = self.http_client.request('POST', 'https://casebook.ru/ms/UserData/Export/CasesSearchFormEncoded',
                                             body=body,
                                             headers=headers,
                                             timeout=80)
+
+        counter = RequestCounter.objects.get(date=datetime.date.today())
+        counter.count += 1
+        counter.save()
 
         text_data = response.data.decode("windows-1251", errors="ignore")
 
@@ -877,6 +891,11 @@ class Casebook:
 
         category_title_to_id = {val['title'].strip().lower(): val['id'] for val in codes.values()}
 
+        white_list_set = set()
+        if white_list_inn:
+            # Разбиваем по запятой, удаляем лишние пробелы и кладем в множество для скорости
+            white_list_set = {inn.strip() for inn in white_list_inn.split(',') if inn.strip()}
+
         result = []
 
         # Предполагаем, что на вход подается датафрейм `df` (вместо списка cases)
@@ -887,6 +906,15 @@ class Casebook:
 
             # Пытаемся достать UUID дела из ссылки для judj_check
             case_id_uuid = case_url.split('/')[-1] if case_url else case_number
+
+            # Проверка наличия в белом списке ИНН
+
+            if white_list_set:
+                # split('.')[0] спасет, если pandas прочитал ИНН как float (например, "7816486910.0")
+                current_inn = str(row['ИНН Ответчика/Должника']).split('.')[0].strip()
+
+                if current_inn not in white_list_set:
+                    continue
 
             # --- 1. Проверка суммы иска ---
             claim_sum_raw = row['Исковые требования']

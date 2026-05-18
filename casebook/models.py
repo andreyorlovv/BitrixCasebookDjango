@@ -61,6 +61,8 @@ class Tasks(models.Model):
     emails = models.IntegerField(blank=True, null=True, verbose_name='Кол-во email')
     check_for_judj_orders = models.BooleanField(blank=True, null=True, default=False, verbose_name='Проверять на судебный приказ')
 
+    white_list_inn = models.TextField(blank=True, null=True, default=None, verbose_name='Список белых ИНН (для авторских)')
+
     def __str__(self):
         return f'{Filter.objects.get(filter_id=self.filter_id).name} - {self.last_execution}'
 
