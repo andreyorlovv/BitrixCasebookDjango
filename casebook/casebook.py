@@ -1079,6 +1079,7 @@ class Casebook:
 
 
 if __name__ == '__main__':
+    pass
     # os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BitrixCasebook.settings')
     #
     # login = 'director@yk-cfo.ru' # os.environ.get('CASEBOOK_LOGIN')

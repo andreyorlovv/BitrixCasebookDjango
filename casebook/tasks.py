@@ -103,7 +103,7 @@ def scan_enchanted(self, task_id):
         # Кешируем filter для переиспользования в цикле
         cached_filter = Filter.objects.get(filter_id=task.filter_id)
 
-        cases = casebook.get_cases(
+        cases = casebook.get_cases_via_excel(
             filter_source=json.loads(filter_.value),
             timedelta=task.days_expire,
             to_load=task.to_load,
