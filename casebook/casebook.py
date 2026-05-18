@@ -912,8 +912,14 @@ class Casebook:
             if white_list_set:
                 # split('.')[0] спасет, если pandas прочитал ИНН как float (например, "7816486910.0")
                 current_inn = str(row['ИНН Ответчика/Должника']).split('.')[0].strip()
-
                 if current_inn not in white_list_set:
+                    models.Case.objects.create(
+                        process_date=datetime.datetime.now(),
+                        case_id=case_number,
+                        is_success=False,
+                        error_message=f'Не входит в белый список ИНН',
+                        from_task=filter_obj,
+                    )
                     continue
 
             # --- 1. Проверка суммы иска ---
