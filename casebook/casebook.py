@@ -831,8 +831,7 @@ class Casebook:
                     if start_date:
                         from_date = (datetime.datetime.now().date() - datetime.timedelta(days=start_date))
                         filter_['items'][i]['filter']['value'] = {
-                            'from': from_date.strftime(
-                                '%Y-%m-%d'),
+                            'from': from_date.strftime('%Y-%m-%d'),
                             'to': (from_date + datetime.timedelta(days=timedelta)).strftime('%Y-%m-%d')
                         }
                     else:
@@ -847,22 +846,20 @@ class Casebook:
                 i += 1
 
         query = {'request': filter_, 'format': 'Csv'}
-
         json_string = json.dumps(query, ensure_ascii=False, separators=(",", ":"))
 
-        # 2. Кодируем чистый JSON в Base64
+        # Кодируем чистый JSON в Base64
         query_ = base64.b64encode(json_string.encode("utf-8")).decode("utf-8")
 
-        # 3. Готовим заголовки
+        # Готовим заголовки
         headers = self.headers
         headers["content-type"] = "application/x-www-form-urlencoded"
 
-        # ВАЖНО: Удаляем ручной content-length!
-        # Если его оставить, он передаст старую неверную длину, и сервер опять обрежет запрос.
+        # Удаляем ручной content-length во избежание обрезки запроса сервером
         if "content-length" in headers:
             del headers["content-length"]
 
-        # 4. Формируем тело запроса
+        # Формируем тело запроса
         body = urllib.parse.urlencode({"requestString": query_})
 
         response = self.http_client.request('POST', 'https://casebook.ru/ms/UserData/Export/CasesSearchFormEncoded',
@@ -870,62 +867,74 @@ class Casebook:
                                             headers=headers,
                                             timeout=80)
 
-        counter = RequestCounter.objects.get(date=datetime.date.today())
+        counter, _ = RequestCounter.objects.get_or_create(date=datetime.date.today())
         counter.count += 1
         counter.save()
 
-        text_data = response.data.decode("windows-1251", errors="ignore")
-
+        # Чтение данных через pandas DataFrame
         df = pd.read_csv(
             io.BytesIO(response.data), sep=";", encoding="windows-1251", quotechar='"'
         )
 
-        # Получаем filter_obj один раз для всех операций
+        # Предварительная оптимизация: кэшируем данные из БД перед циклом
         filter_obj = Filter.objects.get(filter_id=filter_id) if filter_id else None
-
-        # Получаем blacklist INN-ов для быстрой проверки
         blacklist_inns = set(BlackList.objects.filter(type='inn').values_list('value', flat=True))
-
-        # Загружаем stoplist один раз
         stoplist = list(StopList.objects.all())
-
         category_title_to_id = {val['title'].strip().lower(): val['id'] for val in codes.values()}
 
+        # Парсинг белого списка ИНН
         white_list_set = set()
         if white_list_inn:
-            # Разбиваем по запятой, удаляем лишние пробелы и кладем в множество для скорости
             white_list_set = {inn.strip() for inn in white_list_inn.split(',') if inn.strip()}
 
         result = []
 
-        # Предполагаем, что на вход подается датафрейм `df` (вместо списка cases)
         for index, row in df.iterrows():
             # Извлекаем базовые данные с защитой от NaN
             case_number = str(row['Номер дела']).strip() if pd.notna(row['Номер дела']) else "Нет номера"
             case_url = str(row['Ссылка']).strip() if pd.notna(row['Ссылка']) else ""
-
-            # Пытаемся достать UUID дела из ссылки для judj_check
             case_id_uuid = case_url.split('/')[-1] if case_url else case_number
 
-            # Проверка наличия в белом списке ИНН
+            # --- 1. Парсинг ИНН ответчиков (с полной очисткой от NaN и хвостов .0) ---
+            resp_inns_raw = str(row['ИНН Ответчика/Должника']).strip() if pd.notna(
+                row['ИНН Ответчика/Должника']) else ""
+            if resp_inns_raw.lower() == 'nan':
+                resp_inns_raw = ""
 
+            resp_list = []
+            if resp_inns_raw:
+                for inn in re.split(r'[,;\n]', resp_inns_raw):
+                    clean_inn = inn.split('.')[0].strip()
+                    if clean_inn and clean_inn.lower() != 'nan':
+                        resp_list.append(clean_inn)
+
+            # --- 2. Проверка количества ответчиков ---
+            if len(resp_list) > 1:
+                models.Case.objects.create(
+                    process_date=datetime.datetime.now(),
+                    case_id=case_number,
+                    is_success=False,
+                    error_message='больше одного ответчика, отфильтровано',
+                    from_task=filter_obj
+                )
+                continue
+
+            # --- 3. Проверка наличия в белом списке ИНН ---
             if white_list_set:
-                # split('.')[0] спасет, если pandas прочитал ИНН как float (например, "7816486910.0")
-                current_inn = str(row['ИНН Ответчика/Должника']).split('.')[0].strip()
-                if current_inn not in white_list_set:
+                current_inn = resp_list[0] if resp_list else ""
+                if not current_inn or current_inn not in white_list_set:
                     models.Case.objects.create(
                         process_date=datetime.datetime.now(),
                         case_id=case_number,
                         is_success=False,
-                        error_message=f'Не входит в белый список ИНН',
+                        error_message=f'Не входит в белый список ИНН (Значение: {current_inn or "Пусто"})',
                         from_task=filter_obj,
                     )
                     continue
 
-            # --- 1. Проверка суммы иска ---
+            # --- 4. Проверка суммы иска ---
             claim_sum_raw = row['Исковые требования']
             try:
-                # Убираем пробелы, меняем запятые на точки на случай строкового формата "277 685,77"
                 if pd.notna(claim_sum_raw) and str(claim_sum_raw).strip():
                     clean_sum = re.sub(r'[^\d.,]', '', str(claim_sum_raw)).replace(',', '.')
                     claim_sum = float(clean_sum)
@@ -945,29 +954,14 @@ class Casebook:
                     )
                 continue
 
-            # --- 2. Проверка количества ответчиков ---
-            # Предполагаем, что если ответчиков несколько, их ИНН идут через запятую или точку с запятой
-            resp_inns_raw = str(row['ИНН Ответчика/Должника']) if pd.notna(row['ИНН Ответчика/Должника']) else ""
-            resp_list = [inn.strip() for inn in re.split(r'[,;\n]', resp_inns_raw) if inn.strip()]
-
-            if len(resp_list) > 1:
-                models.Case.objects.create(
-                    process_date=datetime.datetime.now(),
-                    case_id=case_number,
-                    is_success=False,
-                    error_message='больше одного ответчика, отфильтровано',
-                    from_task=filter_obj
-                )
-                continue
-
-            # --- 3. Проверка на дубликаты (замена фильтрации cases_to_process) ---
+            # --- 5. Проверка на дубликаты ---
             if CaseModel.objects.filter(case_id=case_number).exists():
                 if not ignore_other_tasks_processed:
                     continue
                 elif CaseModel.objects.filter(case_id=case_number, from_task__id=task_id).exists():
                     continue
 
-            # --- 4. Проверка судебного приказа ---
+            # --- 6. Проверка судебного приказа ---
             if judj_check:
                 if not self._check_for_judjorders(case_id_uuid):
                     models.Case.objects.create(
@@ -979,22 +973,26 @@ class Casebook:
                     )
                     continue
 
-            # --- 5. Основной блок обработки ---
+            # --- 7. Основной блок обработки данных дела ---
             try:
-                # Извлекаем данные сторон
                 plaintiff_name = str(row['Истец/Кредитор']).strip() if pd.notna(row['Истец/Кредитор']) else ""
-                plaintiff_inn = str(row['ИНН Истца/Кредитора']).strip() if pd.notna(row['ИНН Истца/Кредитора']) else ""
-                plaintiff_ogrn = str(row['ОГРН Истца/Кредитора']).strip() if pd.notna(
+                plaintiff_inn = str(row['ИНН Истца/Кредитора']).split('.')[0].strip() if pd.notna(
+                    row['ИНН Истца/Кредитора']) else ""
+                if plaintiff_inn.lower() == 'nan': plaintiff_inn = ""
+
+                plaintiff_ogrn = str(row['ОГРН Истца/Кредитора']).split('.')[0].strip() if pd.notna(
                     row['ОГРН Истца/Кредитора']) else ""
+                if plaintiff_ogrn.lower() == 'nan': plaintiff_ogrn = ""
 
                 respondent_name = str(row['Ответчик/Должник']).strip() if pd.notna(row['Ответчик/Должник']) else ""
                 respondent_inn = resp_list[0] if resp_list else ""
-                respondent_ogrn = str(row['ОГРН Ответчика/Должника']).strip() if pd.notna(
+
+                respondent_ogrn = str(row['ОГРН Ответчика/Должника']).split('.')[0].strip() if pd.notna(
                     row['ОГРН Ответчика/Должника']) else ""
+                if respondent_ogrn.lower() == 'nan': respondent_ogrn = ""
 
                 other_side_name = str(row['Третье лицо/Иное']).strip() if pd.notna(row['Третье лицо/Иное']) else ""
 
-                # В выгрузке нет адреса, ставим заглушку
                 address_stub = "Адрес не передан (табличный формат)"
 
                 plaintiff = Side(name=plaintiff_name, inn=plaintiff_inn, ogrn=plaintiff_ogrn,
@@ -1002,12 +1000,12 @@ class Casebook:
                 respondent = Side(name=respondent_name, inn=respondent_inn, ogrn=respondent_ogrn,
                                   address=address_stub) if respondent_name else None
 
-                # Проверка Blacklist
+                # Проверка Черного списка (Blacklist)
                 for inn_to_check in [plaintiff_inn, respondent_inn]:
                     if inn_to_check and inn_to_check in blacklist_inns:
                         raise BlackListException(f"{inn_to_check} в черном списке")
 
-                # Проверка Stoplist для Ответчика
+                # Проверка Стоп-листов
                 if respondent and scan_r:
                     for stopword in stoplist:
                         if stopword.stopword.upper() in respondent.name.upper():
@@ -1020,7 +1018,6 @@ class Casebook:
                             )
                             raise GetOutOfLoop
 
-                # Проверка Stoplist для Третьих лиц (Аналог OtherRespondent)
                 if other_side_name and scan_or:
                     for stopword in stoplist:
                         if stopword.stopword.upper() in other_side_name.upper():
@@ -1033,7 +1030,6 @@ class Casebook:
                             )
                             raise GetOutOfLoop
 
-                # Проверка Stoplist для Истца
                 if plaintiff and scan_p:
                     for stopword in stoplist:
                         if stopword.stopword.upper() in plaintiff.name.upper():
@@ -1046,7 +1042,7 @@ class Casebook:
                             )
                             raise GetOutOfLoop
 
-                # Инверсия сторон если требуется
+                # Инверсия сторон, если задано настройками
                 if to_load == 1:
                     plaintiff, respondent = respondent, plaintiff
 
@@ -1055,7 +1051,6 @@ class Casebook:
                 if pd.notna(reg_date_raw):
                     if isinstance(reg_date_raw, str):
                         try:
-                            # Пробуем распарсить разные форматы
                             if 'T' in reg_date_raw:
                                 reg_date = datetime.datetime.fromisoformat(reg_date_raw.split('T')[0]).date()
                             else:
@@ -1068,32 +1063,28 @@ class Casebook:
                 else:
                     reg_date = datetime.datetime.now().date()
 
-                # Извлекаем сырые текстовые значения из DataFrame
                 category_text = str(row['Категория спора']).strip() if pd.notna(row['Категория спора']) else ""
                 type_text = str(row['Вид спора']).strip() if pd.notna(row['Вид спора']) else ""
 
-                # 1. Получаем ID категории спора по точному совпадению текста (без учета регистра)
                 case_category_id = category_title_to_id.get(category_text.lower(), None)
 
-                # 2. Определяем ID вида спора
-                # Так как ключи в types — буквы ("Г", "А"), а в таблице длинный текст, ищем по ключевым словам
+                # Определение ID вида спора по ключевым словам
                 case_type_id = None
                 type_text_lower = type_text.lower()
 
                 if type_text in types:
-                    # Если в выгрузке все-таки попалась буква ("Г", "А" и т.д.)
                     case_type_id = types[type_text]
                 elif "гражданск" in type_text_lower:
-                    case_type_id = types["Г"]  # 21814
+                    case_type_id = types["Г"]
                 elif "административ" in type_text_lower or "публичн" in type_text_lower:
-                    case_type_id = types["А"]  # 21813
+                    case_type_id = types["А"]
                 elif "банкротств" in type_text_lower or "несостоятельност" in type_text_lower:
                     if "физ" in type_text_lower or "граждан" in type_text_lower:
                         case_type_id = types["БФ"]
                     else:
                         case_type_id = types["Б"]
 
-                # 3. Создаем объект Case
+                # Собираем валидный инстанс структуры Case
                 case_ = Case(
                     plaintiff=plaintiff,
                     respondent=respondent,
@@ -1102,8 +1093,8 @@ class Casebook:
                     number=case_number,
                     reg_date=reg_date,
                     _type={
-                        "caseTypeM": "",  # В плоском файле кода M нет
-                        "caseTypeENG": type_text  # Оставляем исходный текст для сохранения фактуры
+                        "caseTypeM": "",
+                        "caseTypeENG": type_text
                     },
                     sum_=claim_sum,
                     case_category=case_category_id,
@@ -1123,7 +1114,6 @@ class Casebook:
             except GetOutOfLoop:
                 pass
             except Exception as e:
-                # Универсальный отлов на случай некорректных типов из датафрейма
                 models.Case.objects.create(
                     process_date=datetime.datetime.now().date(),
                     case_id=case_number,
@@ -1133,7 +1123,6 @@ class Casebook:
                 )
 
         return result
-
 
 if __name__ == '__main__':
     pass
