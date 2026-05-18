@@ -875,6 +875,8 @@ class Casebook:
         # Загружаем stoplist один раз
         stoplist = list(StopList.objects.all())
 
+        category_title_to_id = {val['title'].strip().lower(): val['id'] for val in codes.values()}
+
         result = []
 
         # Предполагаем, что на вход подается датафрейм `df` (вместо списка cases)
@@ -1032,25 +1034,46 @@ class Casebook:
                 else:
                     reg_date = datetime.datetime.now().date()
 
-                # Формирование объекта Case
-                # Словари codes и types больше не нужны, так как pandas уже содержит понятные названия
-                case_category = str(row['Категория спора']) if pd.notna(row['Категория спора']) else None
-                case_type = str(row['Вид спора']) if pd.notna(row['Вид спора']) else None
+                # Извлекаем сырые текстовые значения из DataFrame
+                category_text = str(row['Категория спора']).strip() if pd.notna(row['Категория спора']) else ""
+                type_text = str(row['Вид спора']).strip() if pd.notna(row['Вид спора']) else ""
 
+                # 1. Получаем ID категории спора по точному совпадению текста (без учета регистра)
+                case_category_id = category_title_to_id.get(category_text.lower(), None)
+
+                # 2. Определяем ID вида спора
+                # Так как ключи в types — буквы ("Г", "А"), а в таблице длинный текст, ищем по ключевым словам
+                case_type_id = None
+                type_text_lower = type_text.lower()
+
+                if type_text in types:
+                    # Если в выгрузке все-таки попалась буква ("Г", "А" и т.д.)
+                    case_type_id = types[type_text]
+                elif "гражданск" in type_text_lower:
+                    case_type_id = types["Г"]  # 21814
+                elif "административ" in type_text_lower or "публичн" in type_text_lower:
+                    case_type_id = types["А"]  # 21813
+                elif "банкротств" in type_text_lower or "несостоятельност" in type_text_lower:
+                    if "физ" in type_text_lower or "граждан" in type_text_lower:
+                        case_type_id = types["БФ"]
+                    else:
+                        case_type_id = types["Б"]
+
+                # 3. Создаем объект Case
                 case_ = Case(
                     plaintiff=plaintiff,
                     respondent=respondent,
-                    court=str(row['Суд']) if pd.notna(row['Суд']) else "",
+                    court=str(row['Суд']).strip() if pd.notna(row['Суд']) else "",
                     url=case_url,
                     number=case_number,
                     reg_date=reg_date,
                     _type={
-                        "caseTypeM": "",  # В плоском файле обычно нет кода M
-                        "caseTypeENG": case_type
+                        "caseTypeM": "",  # В плоском файле кода M нет
+                        "caseTypeENG": type_text  # Оставляем исходный текст для сохранения фактуры
                     },
                     sum_=claim_sum,
-                    case_category=case_category,
-                    case_type=case_type
+                    case_category=case_category_id,
+                    case_type=case_type_id
                 )
 
                 result.append(case_)
