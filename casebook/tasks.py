@@ -222,10 +222,9 @@ def scan_enchanted(self, task_id):
     except Exception as e:
         logger.error(f"Critical error in scan_enchanted for task {task_id}: {e}\n{traceback.format_exc()}")
         # Повторить задачу через 5 минут только если это не последняя попытка
-        if self.request.retries < self.max_retries:
-            raise self.retry(exc=e, countdown=300)
-        else:
-            logger.error(f"Task {task_id} failed after {self.max_retries} retries")
+        # if self.request.retries < self.max_retries:
+        #     raise self.retry(exc=e, countdown=300)
+        logger.error(f"Task {task_id} failed after {self.max_retries} retries")
 
     finally:
         # ГАРАНТИРОВАННО обновляем last_execution
