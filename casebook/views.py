@@ -94,42 +94,56 @@ def process_delete_task(request):
 @login_required(login_url='/login/')
 @staff_member_required
 def download_xlsx_view(request):
-    queryset = Case.objects.all()
-    if request.GET.get('from') or request.GET.get('to'):
-        queryset = queryset.filter(process_date__range=[request.GET.get('from'), request.GET.get('to')])
-    output = io.BytesIO()
+    # Оптимизируем запрос с помощью select_related
+    queryset = Case.objects.all().select_related('from_task')
 
+    date_from = request.GET.get('from')
+    date_to = request.GET.get('to')
+
+    if date_from or date_to:
+        queryset = queryset.filter(process_date__range=[date_from, date_to])
+
+    output = io.BytesIO()
     workbook = xlsxwriter.Workbook(output, {'in_memory': True})
     worksheet = workbook.add_worksheet()
-    row = 0
-    col = 0
-    worksheet.write(row, col, 'id кейса')
-    worksheet.write(row, col + 1, 'Номер дела в арбитре')
-    worksheet.write(row, col + 2, 'Дата обработки')
-    worksheet.write(row, col + 3, 'Успешно обработано (?)')
-    worksheet.write(row, col + 4, 'Ошибка, если есть')
-    worksheet.write(row, col + 5, 'Подборка')
-    worksheet.write(row, col + 6, 'Ссылка на лид в Б24')
-    worksheet.write(row, col + 7, 'Контакты')
+
+    # Заголовки
+    headers = [
+        'id кейса', 'Номер дела в арбитре', 'Дата обработки',
+        'Успешно обработано (?)', 'Ошибка, если есть', 'Подборка',
+        'Ссылка на лид в Б24', 'Контакты'
+    ]
+    for col, header in enumerate(headers):
+        worksheet.write(0, col, header)
+
     row = 1
     for item in queryset:
-        worksheet.write(row, col, item.id)
-        worksheet.write(row, col + 1, item.case_id)
-        worksheet.write(row, col + 2, item.process_date.strftime('%d.%m.%Y'))
-        worksheet.write(row, col + 3, 'Да' if item.is_success else 'Нет')
-        worksheet.write(row, col + 4, item.error_message)
-        worksheet.write(row, col + 5, item.from_task.name)
-        worksheet.write(row, col + 6, f'https://crm.yk-cfo.ru/crm/lead/details/{item.bitrix_lead_id}' if item.bitrix_lead_id else 'Не загружено')
-        worksheet.write(row, col + 7, item.contacts if item.contacts else 'Не загружено')
-        row += 1
-    workbook.close()
+        worksheet.write(row, 0, item.id)
+        worksheet.write(row, 1, item.case_id)
 
+        # Безопасно выводим дату
+        p_date = item.process_date.strftime('%d.%m.%Y') if item.process_date else ''
+        worksheet.write(row, 2, p_date)
+
+        worksheet.write(row, 3, 'Да' if item.is_success else 'Нет')
+        worksheet.write(row, 4, item.error_message or '')
+
+        # Безопасно достаем имя подборки (если вдруг связи нет, выведется 'Не указана')
+        task_name = item.from_task.name if item.from_task else 'Не указана'
+        worksheet.write(row, 5, task_name)
+
+        lead_url = f'https://crm.yk-cfo.ru/crm/lead/details/{item.bitrix_lead_id}' if item.bitrix_lead_id else 'Не загружено'
+        worksheet.write(row, 6, lead_url)
+        worksheet.write(row, 7, item.contacts if item.contacts else 'Не загружено')
+        row += 1
+
+    workbook.close()
     output.seek(0)
 
-    print(workbook.filename)
-
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                            content=output.read())
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        content=output.read()
+    )
     response['Content-Disposition'] = f"attachment; filename={datetime.datetime.now().strftime('%Y%m%d-%H%M')}.xlsx"
 
     return response
