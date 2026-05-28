@@ -245,9 +245,12 @@ def scan_enchanted_manual(self, task_id, excel):
     import time
     logger = logging.getLogger(__name__)
 
-    # excel приходит как bytes из view — оборачиваем в BytesIO для pandas
-    if isinstance(excel, (bytes, bytearray)):
-        excel = io.BytesIO(excel)
+    # excel — путь к временному файлу на диске (передаётся из view).
+    # Открываем здесь; удаляем после завершения задачи в блоке finally.
+    excel_path = None
+    if isinstance(excel, str):
+        excel_path = excel
+        excel = open(excel_path, 'rb')
 
     task = None
 
@@ -404,6 +407,17 @@ def scan_enchanted_manual(self, task_id, excel):
                 logger.info(f"Task {task_id} completed, last_execution updated to {task.last_execution}")
             except Exception as e:
                 logger.error(f"Failed to update last_execution for task {task_id}: {e}")
+
+        # Закрываем и удаляем временный файл, если он был создан view'ом
+        if excel_path:
+            try:
+                if not excel.closed:
+                    excel.close()
+                import os as _os
+                _os.remove(excel_path)
+                logger.info(f"Temp file removed: {excel_path}")
+            except Exception as e:
+                logger.warning(f"Could not remove temp file {excel_path}: {e}")
 
 
 @shared_task

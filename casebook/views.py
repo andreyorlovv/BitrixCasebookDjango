@@ -2,6 +2,7 @@ import datetime
 import io
 import json
 import os
+import tempfile
 
 import xlsxwriter
 
@@ -86,10 +87,9 @@ def process_task(request):
 @login_required(login_url='/login/')
 def upload_excel_for_task(request):
     """
-    Принимает POST с файлом (CSV windows-1251/; или XLSX) и task_id.
-    CSV от Casebook передаётся в задачу как есть (bytes).
-    XLSX конвертируется в CSV windows-1251 с ; чтобы get_cases_via_excel
-    читал его теми же параметрами, что и при автоматической выгрузке.
+    Сохраняет загруженный файл во временный файл на диске,
+    передаёт в Celery только путь — чтобы не превышать лимит брокера.
+    XLSX конвертируется в CSV (windows-1251, ;) перед сохранением.
     """
     if request.method != 'POST':
         return redirect('/')
@@ -101,22 +101,37 @@ def upload_excel_for_task(request):
         return redirect('/')
 
     filename = uploaded_file.name.lower()
-    file_bytes = uploaded_file.read()
 
-    if filename.endswith('.xlsx') or filename.endswith('.xls'):
-        # XLSX → конвертируем в CSV windows-1251 с ; (родной формат Casebook)
-        try:
+    # Папка для временных файлов — берём из настроек или /tmp
+    upload_dir = getattr(settings, 'CASEBOOK_UPLOAD_DIR', tempfile.gettempdir())
+    os.makedirs(upload_dir, exist_ok=True)
+
+    try:
+        if filename.endswith('.xlsx') or filename.endswith('.xls'):
+            # XLSX → конвертируем в CSV windows-1251 с ; (родной формат Casebook)
             import pandas as pd
-            df = pd.read_excel(io.BytesIO(file_bytes))
-            csv_buffer = io.BytesIO()
-            df.to_csv(csv_buffer, index=False, sep=';', encoding='windows-1251')
-            file_bytes = csv_buffer.getvalue()
-        except Exception:
-            return redirect('/')
+            df = pd.read_excel(io.BytesIO(uploaded_file.read()))
+            tmp = tempfile.NamedTemporaryFile(
+                delete=False, suffix='.csv', dir=upload_dir
+            )
+            df.to_csv(tmp.name, index=False, sep=';', encoding='windows-1251')
+            tmp_path = tmp.name
+            tmp.close()
+        else:
+            # CSV — пишем на диск чанками, не грузим всё в память
+            tmp = tempfile.NamedTemporaryFile(
+                delete=False, suffix='.csv', dir=upload_dir
+            )
+            for chunk in uploaded_file.chunks():
+                tmp.write(chunk)
+            tmp_path = tmp.name
+            tmp.close()
 
-    # CSV (родной формат Casebook: windows-1251, ;) передаём байты напрямую
+    except Exception:
+        return redirect('/')
+
     casebook.tasks.scan_enchanted_manual.apply_async(
-        args=(task_id, file_bytes),
+        args=(task_id, tmp_path),
         expires=7200,
         soft_time_limit=6600,
         time_limit=7200,
