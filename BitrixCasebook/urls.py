@@ -32,4 +32,5 @@ urlpatterns = [
     path('', views.custom_index, name='admin_custom_index'),
     path('', admin.site.urls),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('upload_excel/', views.upload_excel_for_task, name='upload_excel_for_task'),
 ]

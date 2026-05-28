@@ -238,6 +238,174 @@ def scan_enchanted(self, task_id):
                 logger.error(f"Failed to update last_execution for task {task_id}: {e}")
 
 
+@shared_task(bind=True, max_retries=3, soft_time_limit=6600, time_limit=7200)
+def scan_enchanted_manual(self, task_id, excel):
+    import io
+    import logging
+    import time
+    logger = logging.getLogger(__name__)
+
+    # excel приходит как bytes из view — оборачиваем в BytesIO для pandas
+    if isinstance(excel, (bytes, bytearray)):
+        excel = io.BytesIO(excel)
+
+    task = None
+
+    try:
+        task = Tasks.objects.get(id=task_id)
+        filter_ = Filter.objects.select_related().filter(filter_id=task.filter_id).first()
+
+        if not filter_:
+            logger.error(f"Filter not found for task {task_id}")
+            return
+
+        logger.info(f"Starting scan_enchanted for task {task_id}, filter: {filter_.name}")
+
+        from casebook.casebook import Casebook
+
+        casebook = Casebook(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
+
+        bitrix = BitrixConnect(webhook=settings.BITRIX_CALLBACK)
+
+        # Кешируем filter для переиспользования в цикле
+        cached_filter = Filter.objects.get(filter_id=task.filter_id)
+
+        cases = casebook.get_cases_via_excel(
+            filter_source=json.loads(filter_.value),
+            timedelta=task.days_expire,
+            to_load=task.to_load,
+            cash=task.cash,
+            scan_p=task.scan_p,
+            scan_r=task.scan_r,
+            filter_id=task.filter_id,
+            scan_or=task.scan_or,
+            ignore_other_tasks_processed=task.ignore_other_tasks_processed,
+            task_id=filter_.id,
+            judj_check=task.check_for_judj_orders,
+            start_date=task.start_date,
+            white_list_inn=task.white_list_inn,
+            excel=excel
+        )
+
+        logger.info(f'Cases retrieved: {len(cases) if cases else 0}')
+
+        if cases:
+            for case in cases:
+                logger.info(f"Processing case: {case.number}")
+                try:
+                    # Проверяем существование кейса один раз
+                    case_exists = Case.objects.filter(case_id=case.number).exists()
+                    case_exists_in_filter = Case.objects.filter(
+                        case_id=case.number,
+                        from_task__id=filter_.id
+                    ).exists()
+
+                    should_process = (
+                        not case_exists or
+                        (not case_exists_in_filter and task.ignore_other_tasks_processed)
+                    )
+
+                    if should_process:
+                        # Получаем контакты с обработкой timeout
+                        try:
+                            case.contacts_info = get_contacts_via_export_base(
+                                ogrn=case.respondent.ogrn,
+                                inn=case.respondent.inn,
+                                key=settings.EXPORT_BASE_API_KEY
+                            )
+                        except requests.exceptions.Timeout:
+                            logger.warning(f"Timeout getting contacts for {case.number}")
+                            case.contacts_info = {
+                                'emails': [],
+                                'numbers': [],
+                                'blacklist_emails': [],
+                                'blacklist_numbers': []
+                            }
+                        except Exception as e:
+                            logger.warning(f"Error getting contacts for {case.number}: {e}")
+                            case.contacts_info = {
+                                'emails': [],
+                                'numbers': [],
+                                'blacklist_emails': [],
+                                'blacklist_numbers': []
+                            }
+
+                        # Обрезаем контакты по лимиту
+                        if case.contacts_info.get('numbers') and task.contacts:
+                            case.contacts_info['numbers'] = case.contacts_info['numbers'][0:task.contacts]
+                        if case.contacts_info.get('emails') and task.emails:
+                            case.contacts_info['emails'] = case.contacts_info['emails'][0:task.emails]
+
+                        # Создаем лид в Bitrix24
+                        try:
+                            # Определяем права на основе filter_id
+                            if task.filter_id == '558875':
+                                rights = True
+                            elif task.filter_id == '515745':
+                                rights = 1169
+                            elif task.filter_id == '677492':
+                                rights = 1179
+                            else:
+                                rights = str(task.b24_collection) if task.b24_collection else False
+
+                            # Создаем лид
+                            result = bitrix.create_lead(case, rights=rights, filter_id=task.filter_id)
+
+                            # Сохраняем результат в БД
+                            Case.objects.create(
+                                process_date=datetime.datetime.now(),
+                                case_id=case.number,
+                                is_success=True,
+                                bitrix_lead_id=result,
+                                from_task=cached_filter,
+                                contacts=case.contacts_info
+                            )
+                            logger.info(f"Successfully created lead for {case.number}: {result}")
+
+                        except ErrorInServerResponseException as e:
+                            logger.error(f"Bitrix error for {case.number}: {e}")
+                            Case.objects.create(
+                                process_date=datetime.datetime.now(),
+                                case_id=case.number,
+                                is_success=False,
+                                error_message=f'Ошибка в контактных данных: {e}',
+                                from_task=cached_filter,
+                            )
+                    else:
+                        logger.info(f"Case {case.number} already processed, skipping")
+
+                except Exception as e:
+                    logger.error(f"Error processing case {case.number}: {e}\n{traceback.format_exc()}")
+                    try:
+                        Case.objects.create(
+                            process_date=datetime.datetime.now(),
+                            case_id=case.number,
+                            is_success=False,
+                            error_message=f'{e}, {traceback.format_exc()}',
+                            from_task=cached_filter,
+                        )
+                    except Exception as db_error:
+                        logger.error(f"Failed to save error case {case.number}: {db_error}")
+
+    except Exception as e:
+        logger.error(f"Critical error in scan_enchanted for task {task_id}: {e}\n{traceback.format_exc()}")
+        # Повторить задачу через 5 минут только если это не последняя попытка
+        # if self.request.retries < self.max_retries:
+        #     raise self.retry(exc=e, countdown=300)
+        logger.error(f"Task {task_id} failed after {self.max_retries} retries")
+
+    finally:
+        # ГАРАНТИРОВАННО обновляем last_execution
+        if task:
+            try:
+                task.refresh_from_db()
+                task.last_execution = datetime.datetime.now(tz=datetime.timezone.utc)
+                task.save(update_fields=['last_execution'])
+                logger.info(f"Task {task_id} completed, last_execution updated to {task.last_execution}")
+            except Exception as e:
+                logger.error(f"Failed to update last_execution for task {task_id}: {e}")
+
+
 @shared_task
 def daily_report():
     import smtplib

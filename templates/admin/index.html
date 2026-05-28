@@ -33,19 +33,50 @@
             </div>
             <div class="card-body">
                 {% for task in tasks %}
-                    <div class="container">
+                    <div class="container mb-2">
                         <div class="row border rounded p-2">
                             <div class="col-3" style="text-align: center; margin: auto"><h5>{{ task.name }}</h5></div>
                             <div class="col"> Сканирование проводится каждые {{ task.interval }} минут(-ы) <br>
                                 В обработку попадают дела начиная с {{ task.time_delta }}</div>
                             <div class="col" style="margin: auto; display: flex;
                                                       align-items: center;
-                                                      justify-content: center;">
-                                <a href="/delete_task?id={{ task.task_id }}" class="btn btn-danger">Удалить</a>
-                                <a href="/process_task?task_id={{ task.task_id }}" class="btn btn-outline-primary" style="margin: 1rem">Запуск на выполнение</a>
+                                                      justify-content: center;
+                                                      gap: 0.5rem;
+                                                      flex-wrap: wrap;">
 
+                                <a href="/delete_task?id={{ task.task_id }}" class="btn btn-danger">Удалить</a>
+
+                                <a href="/process_task?task_id={{ task.task_id }}" class="btn btn-outline-primary">Запуск на выполнение</a>
+
+                                {# Кнопка загрузки Excel — открывает скрытую форму для этой задачи #}
+                                <button type="button"
+                                        class="btn btn-outline-warning"
+                                        onclick="toggleUploadForm('upload-form-{{ task.task_id }}')">
+                                    📂 Загрузить Excel
+                                </button>
                             </div>
                         </div>
+
+                        {# Скрытая форма загрузки файла, уникальная для каждой задачи #}
+                        <div id="upload-form-{{ task.task_id }}"
+                             style="display: none; padding: 0.75rem 1rem; background: #f8f9fa; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 4px 4px;">
+                            <form method="post"
+                                  action="/upload_excel/"
+                                  enctype="multipart/form-data"
+                                  style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                                {% csrf_token %}
+                                <input type="hidden" name="task_id" value="{{ task.task_id }}">
+                                <input type="file"
+                                       name="excel_file"
+                                       accept=".xlsx,.xls,.csv"
+                                       class="form-control form-control-sm"
+                                       style="max-width: 320px;"
+                                       required>
+                                <button type="submit" class="btn btn-warning btn-sm">Запустить обработку</button>
+                                <small class="text-muted">Поддерживаются форматы: .xlsx, .xls, .csv</small>
+                            </form>
+                        </div>
+
                     </div>
                 {% endfor %}
             </div>
@@ -53,4 +84,15 @@
     {% endif %}
 
     </div>
+
+    <script>
+    function toggleUploadForm(formId) {
+        var form = document.getElementById(formId);
+        if (form.style.display === 'none') {
+            form.style.display = 'block';
+        } else {
+            form.style.display = 'none';
+        }
+    }
+    </script>
 {% endblock %}

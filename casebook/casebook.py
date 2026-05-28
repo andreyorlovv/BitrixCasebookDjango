@@ -822,59 +822,67 @@ class Casebook:
         else: return False
 
     def get_cases_via_excel(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True, filter_id=None,
-                  scan_or=False, ignore_other_tasks_processed=False, task_id=None, judj_check=False, start_date=None, white_list_inn: str=None):
-        i = 0
-        filter_ = filter_source['filter']
-        for filter__ in filter_['items']:
-            try:
-                if filter__['filter']['type'] == 'CaseStartDate':
-                    if start_date:
-                        from_date = (datetime.datetime.now().date() - datetime.timedelta(days=start_date))
-                        filter_['items'][i]['filter']['value'] = {
-                            'from': from_date.strftime('%Y-%m-%d'),
-                            'to': (from_date + datetime.timedelta(days=timedelta)).strftime('%Y-%m-%d')
-                        }
+                  scan_or=False, ignore_other_tasks_processed=False, task_id=None, judj_check=False, start_date=None, white_list_inn: str=None, excel=None):
+        if excel:
+            df = pd.read_csv(
+                excel,
+                sep=';',
+                encoding='windows-1251',
+                quotechar='"',
+            )
+        else:
+            i = 0
+            filter_ = filter_source['filter']
+            for filter__ in filter_['items']:
+                try:
+                    if filter__['filter']['type'] == 'CaseStartDate':
+                        if start_date:
+                            from_date = (datetime.datetime.now().date() - datetime.timedelta(days=start_date))
+                            filter_['items'][i]['filter']['value'] = {
+                                'from': from_date.strftime('%Y-%m-%d'),
+                                'to': (from_date + datetime.timedelta(days=timedelta)).strftime('%Y-%m-%d')
+                            }
+                        else:
+                            filter_['items'][i]['filter']['value'] = {
+                                'from': (datetime.datetime.now().date() - datetime.timedelta(days=timedelta)).strftime(
+                                    '%Y-%m-%d'),
+                                'to': datetime.datetime.now().date().strftime('%Y-%m-%d')
+                            }
                     else:
-                        filter_['items'][i]['filter']['value'] = {
-                            'from': (datetime.datetime.now().date() - datetime.timedelta(days=timedelta)).strftime(
-                                '%Y-%m-%d'),
-                            'to': datetime.datetime.now().date().strftime('%Y-%m-%d')
-                        }
-                else:
+                        i += 1
+                except KeyError:
                     i += 1
-            except KeyError:
-                i += 1
 
-        query = {'request': filter_, 'format': 'Csv'}
-        json_string = json.dumps(query, ensure_ascii=False, separators=(",", ":"))
+            query = {'request': filter_, 'format': 'Csv'}
+            json_string = json.dumps(query, ensure_ascii=False, separators=(",", ":"))
 
-        # Кодируем чистый JSON в Base64
-        query_ = base64.b64encode(json_string.encode("utf-8")).decode("utf-8")
+            # Кодируем чистый JSON в Base64
+            query_ = base64.b64encode(json_string.encode("utf-8")).decode("utf-8")
 
-        # Готовим заголовки
-        headers = self.headers
-        headers["content-type"] = "application/x-www-form-urlencoded"
+            # Готовим заголовки
+            headers = self.headers
+            headers["content-type"] = "application/x-www-form-urlencoded"
 
-        # Удаляем ручной content-length во избежание обрезки запроса сервером
-        if "content-length" in headers:
-            del headers["content-length"]
+            # Удаляем ручной content-length во избежание обрезки запроса сервером
+            if "content-length" in headers:
+                del headers["content-length"]
 
-        # Формируем тело запроса
-        body = urllib.parse.urlencode({"requestString": query_})
+            # Формируем тело запроса
+            body = urllib.parse.urlencode({"requestString": query_})
 
-        response = self.http_client.request('POST', 'https://casebook.ru/ms/UserData/Export/CasesSearchFormEncoded',
-                                            body=body,
-                                            headers=headers,
-                                            timeout=80)
+            response = self.http_client.request('POST', 'https://casebook.ru/ms/UserData/Export/CasesSearchFormEncoded',
+                                                body=body,
+                                                headers=headers,
+                                                timeout=80)
 
-        counter, _ = RequestCounter.objects.get_or_create(date=datetime.date.today())
-        counter.count += 1
-        counter.save()
+            counter, _ = RequestCounter.objects.get_or_create(date=datetime.date.today())
+            counter.count += 1
+            counter.save()
 
-        # Чтение данных через pandas DataFrame
-        df = pd.read_csv(
-            io.BytesIO(response.data), sep=";", encoding="windows-1251", quotechar='"'
-        )
+            # Чтение данных через pandas DataFrame
+            df = pd.read_csv(
+                io.BytesIO(response.data), sep=";", encoding="windows-1251", quotechar='"'
+            )
 
         # Предварительная оптимизация: кэшируем данные из БД перед циклом
         filter_obj = Filter.objects.get(filter_id=filter_id) if filter_id else None

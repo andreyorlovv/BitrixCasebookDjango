@@ -10,7 +10,6 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import redirect
-from requests import RequestException
 from requests.exceptions import SSLError
 from rest_framework.decorators import api_view
 
@@ -77,12 +76,53 @@ def process_task(request):
     task_id = request.GET.get('task_id')
     casebook.tasks.scan_enchanted.apply_async(
         args=(task_id,),
-        expires=7200,  # 2 hours
-        soft_time_limit=6600,  # 1 hour 50 minutes - soft limit
-        time_limit=7200  # 2 hours - hard limit
+        expires=7200,
+        soft_time_limit=6600,
+        time_limit=7200
     )
     return redirect('/')
 
+
+@login_required(login_url='/login/')
+def upload_excel_for_task(request):
+    """
+    Принимает POST с файлом (CSV windows-1251/; или XLSX) и task_id.
+    CSV от Casebook передаётся в задачу как есть (bytes).
+    XLSX конвертируется в CSV windows-1251 с ; чтобы get_cases_via_excel
+    читал его теми же параметрами, что и при автоматической выгрузке.
+    """
+    if request.method != 'POST':
+        return redirect('/')
+
+    task_id = request.POST.get('task_id')
+    uploaded_file = request.FILES.get('excel_file')
+
+    if not task_id or not uploaded_file:
+        return redirect('/')
+
+    filename = uploaded_file.name.lower()
+    file_bytes = uploaded_file.read()
+
+    if filename.endswith('.xlsx') or filename.endswith('.xls'):
+        # XLSX → конвертируем в CSV windows-1251 с ; (родной формат Casebook)
+        try:
+            import pandas as pd
+            df = pd.read_excel(io.BytesIO(file_bytes))
+            csv_buffer = io.BytesIO()
+            df.to_csv(csv_buffer, index=False, sep=';', encoding='windows-1251')
+            file_bytes = csv_buffer.getvalue()
+        except Exception:
+            return redirect('/')
+
+    # CSV (родной формат Casebook: windows-1251, ;) передаём байты напрямую
+    casebook.tasks.scan_enchanted_manual.apply_async(
+        args=(task_id, file_bytes),
+        expires=7200,
+        soft_time_limit=6600,
+        time_limit=7200,
+    )
+
+    return redirect('/')
 
 
 @login_required(login_url='/login/')
@@ -94,7 +134,6 @@ def process_delete_task(request):
 @login_required(login_url='/login/')
 @staff_member_required
 def download_xlsx_view(request):
-    # Оптимизируем запрос с помощью select_related
     queryset = Case.objects.all().select_related('from_task')
 
     date_from = request.GET.get('from')
@@ -107,7 +146,6 @@ def download_xlsx_view(request):
     workbook = xlsxwriter.Workbook(output, {'in_memory': True})
     worksheet = workbook.add_worksheet()
 
-    # Заголовки
     headers = [
         'id кейса', 'Номер дела в арбитре', 'Дата обработки',
         'Успешно обработано (?)', 'Ошибка, если есть', 'Подборка',
@@ -120,18 +158,12 @@ def download_xlsx_view(request):
     for item in queryset:
         worksheet.write(row, 0, item.id)
         worksheet.write(row, 1, item.case_id)
-
-        # Безопасно выводим дату
         p_date = item.process_date.strftime('%d.%m.%Y') if item.process_date else ''
         worksheet.write(row, 2, p_date)
-
         worksheet.write(row, 3, 'Да' if item.is_success else 'Нет')
         worksheet.write(row, 4, item.error_message or '')
-
-        # Безопасно достаем имя подборки (если вдруг связи нет, выведется 'Не указана')
         task_name = item.from_task.name if item.from_task else 'Не указана'
         worksheet.write(row, 5, task_name)
-
         lead_url = f'https://crm.yk-cfo.ru/crm/lead/details/{item.bitrix_lead_id}' if item.bitrix_lead_id else 'Не загружено'
         worksheet.write(row, 6, lead_url)
         worksheet.write(row, 7, item.contacts if item.contacts else 'Не загружено')
@@ -145,7 +177,6 @@ def download_xlsx_view(request):
         content=output.read()
     )
     response['Content-Disposition'] = f"attachment; filename={datetime.datetime.now().strftime('%Y%m%d-%H%M')}.xlsx"
-
     return response
 
 
