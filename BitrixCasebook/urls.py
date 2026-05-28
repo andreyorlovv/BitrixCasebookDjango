@@ -30,7 +30,8 @@ urlpatterns = [
     path('process_task/', views.process_task, name='process_task'),
     path('update_filters/', views.update_filters, name='update_filters'),
     path('', views.custom_index, name='admin_custom_index'),
-    path('', admin.site.urls),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('upload_excel/', views.upload_excel_for_task, name='upload_excel_for_task'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('', admin.site.urls),
+
 ]
