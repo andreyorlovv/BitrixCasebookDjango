@@ -1,0 +1,16 @@
+{% extends "admin/change_list.html" %}
+
+{% block content %}
+<div style="margin-bottom: 15px; padding: 12px 15px; background: #f8f9fa;
+            border: 1px solid #dee2e6; border-radius: 4px;">
+    <form method="post" action="upload-inn/" enctype="multipart/form-data"
+          style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        {% csrf_token %}
+        <strong>Загрузка чёрного списка ИНН из файла:</strong>
+        <input type="file" name="inn_file" accept=".xlsx,.xls,.csv" required>
+        <button type="submit" class="button">Загрузить и добавить</button>
+        <span style="color: #666;">Форматы: .xlsx, .xls, .csv — ячейки с ИНН (10 или 12 цифр)</span>
+    </form>
+</div>
+{{ block.super }}
+{% endblock %}

@@ -190,7 +190,7 @@ def get_contacts(inn, ogrn):
              'blacklist_emails': blacklisted_emails}
 
 
-def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
+def get_contacts_via_export_base_depr(key: str, ogrn: str = None, inn: str = None):
 
     if os.environ.get('local_debug'):
         return {'numbers': [],
@@ -281,6 +281,105 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
             'emails': result_email,
              'blacklist_numbers': blacklisted_numbers,
              'blacklist_emails': blacklisted_emails}
+
+
+def normalize_number(number: str) -> str:
+    """Приводит телефон к виду 7XXXXXXXXXX (только цифры)."""
+    digits = re.sub(r'\D', '', number)
+    if digits.startswith('8'):
+        digits = '7' + digits[1:]
+    return digits
+
+def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
+    empty_result = {'numbers': [],
+                    'emails': [],
+                    'blacklist_numbers': [],
+                    'blacklist_emails': []}
+
+    # Формируем URL запроса к export-base
+    params = {'key': key}
+    if inn:
+        params['inn'] = inn
+    if ogrn:
+        params['ogrn'] = ogrn
+
+    if not inn and not ogrn:
+        return empty_result
+
+    url = 'https://export-base.ru/api/company/'
+
+    try:
+        response = requests.get(url, params=params, timeout=30)
+        response.raise_for_status()
+    except requests.exceptions.Timeout:
+        print(f"Timeout при запросе к export-base для inn={inn}, ogrn={ogrn}")
+        return empty_result
+    except (SSLError, requests.exceptions.RequestException) as e:
+        print(f"Ошибка запроса к export-base: {e}")
+        return empty_result
+
+    try:
+        result_data = json.loads(response.text)
+        data = result_data['companies_data'][0]
+    except (json.JSONDecodeError, KeyError, IndexError) as e:
+        print(f"Не удалось разобрать ответ export-base: {e}")
+        return empty_result
+
+    # Собираем телефоны: стационарный + мобильный, разделители ", "
+    number_list = []
+    for field in ('stationary_phone', 'mobile_phone'):
+        raw = data.get(field) or ''
+        for part in raw.split(','):
+            part = part.strip()
+            if part:
+                number_list.append(part)
+
+    # Собираем email-адреса (в поле могут быть перечислены через ", ")
+    email_list = []
+    raw_emails = data.get('email') or ''
+    for part in raw_emails.split(','):
+        part = part.strip()
+        if part:
+            email_list.append(part)
+
+    # Нормализация и фильтрация телефонов по чёрному списку
+    valid_numbers = []
+    blacklisted_numbers = []
+    for number in number_list:
+        number = normalize_number(number)
+        if not number:
+            continue
+        if BlackList.objects.filter(value=number).exists():
+            blacklisted_numbers.append(number)
+        else:
+            valid_numbers.append(number)
+
+    # Фильтрация email по чёрному списку (значение + маска домена)
+    result_email = []
+    blacklisted_emails = []
+    for email in email_list:
+        domain = email.split('@')[1] if '@' in email else ''
+        is_blacklisted = (
+            BlackList.objects.filter(value=email).exists()
+            or (domain and BlackList.objects.filter(
+                type='email_mask', value__contains=domain).exists())
+        )
+        if is_blacklisted:
+            blacklisted_emails.append(email)
+        else:
+            result_email.append(email)
+
+    valid_numbers = list(set(valid_numbers))
+    result_email = list(set(result_email))
+
+    result = {'numbers': valid_numbers,
+              'emails': result_email,
+              'blacklist_numbers': blacklisted_numbers,
+              'blacklist_emails': blacklisted_emails}
+
+    print("Полученные контакты -", {'numbers': valid_numbers, 'emails': result_email})
+
+    return result
 
 # if __name__ == "__main__":
 #     print(get_name('1105250003044'))

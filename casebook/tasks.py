@@ -141,8 +141,8 @@ def scan_enchanted(self, task_id):
                         # Получаем контакты с обработкой timeout
                         try:
                             case.contacts_info = get_contacts_via_export_base(
-                                ogrn=case.respondent.ogrn,
-                                inn=case.respondent.inn,
+                                ogrn=case.target.ogrn,
+                                inn=case.target.inn,
                                 key=settings.EXPORT_BASE_API_KEY
                             )
                         except requests.exceptions.Timeout:
@@ -287,6 +287,8 @@ def scan_enchanted_manual(self, task_id, excel):
             judj_check=task.check_for_judj_orders,
             start_date=task.start_date,
             white_list_inn=task.white_list_inn,
+            scan_p_bl=task.scan_p_bl,
+            scan_r_bl=task.scan_r_bl,
             excel=excel
         )
 
@@ -312,8 +314,8 @@ def scan_enchanted_manual(self, task_id, excel):
                         # Получаем контакты с обработкой timeout
                         try:
                             case.contacts_info = get_contacts_via_export_base(
-                                ogrn=case.respondent.ogrn,
-                                inn=case.respondent.inn,
+                                ogrn=case.target.ogrn,
+                                inn=case.target.inn,
                                 key=settings.EXPORT_BASE_API_KEY
                             )
                         except requests.exceptions.Timeout:
@@ -361,7 +363,8 @@ def scan_enchanted_manual(self, task_id, excel):
                                 is_success=True,
                                 bitrix_lead_id=result,
                                 from_task=cached_filter,
-                                contacts=case.contacts_info
+                                contacts=case.contacts_info,
+                                error_message=json.dumps(case),
                             )
                             logger.info(f"Successfully created lead for {case.number}: {result}")
 

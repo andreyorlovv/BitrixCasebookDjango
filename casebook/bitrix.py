@@ -143,12 +143,12 @@ class BitrixConnect:
         else:
             self.bitrix = Bitrix(webhook)
     def create_lead(self, case: Case, rights, filter_id):
-        if not case.respondent.inn:
+        if not case.target.inn:
             CaseModel.objects.create(
                 process_date=datetime.now(),
                 case_id=case.number,
                 is_success=False,
-                error_message=f'Пустой инн (Для разработчиков -> {case.respondent.inn})',
+                error_message=f'Пустой инн (Для разработчиков -> {case.target.inn})',
                 from_task=Filter.objects.get(filter_id=filter_id)
             )
             return 'Except'
@@ -161,7 +161,7 @@ class BitrixConnect:
         bl_emails = ' | '.join(str(e) for e in case.contacts_info['blacklist_emails'])
 
         # Определяем тип ответчика: 896 = ИП, 898 = ООО
-        respondent_type = 896 if len(case.respondent.inn) == 12 else 898
+        respondent_type = 896 if len(case.target.inn) == 12 else 898
 
         # Определяем тип прав: 893 = исключительные, 894 = неисключительные
         if isinstance(rights, bool):
@@ -176,26 +176,26 @@ class BitrixConnect:
             "TITLE": case.number,
             "UF_CRM_1703238484214": case.url,
             "STATUS_ID": "UC_0LLO5N",
-            "COMPANY_TITLE": case.respondent.name,
+            "COMPANY_TITLE": case.target.name,
             "UF_CRM_1702365701": case.number,
             "UF_CRM_1702366987": courts.get(case.court),
             "UF_CRM_1702365740": case.reg_date.isoformat(),
-            "UF_CRM_1702365922": case.plaintiff.name,
+            "UF_CRM_1702365922": case.other_side.name,
             "UF_CRM_1702365965": case.sum_,
             "PHONE": phones,
             "EMAIL": emails,
             "UF_CRM_1703235529": respondent_type,
             "UF_CRM_1703234971": rights_type,
-            "UF_CRM_1707995533": case.respondent.inn,
+            "UF_CRM_1707995533": case.target.inn,
             "ASSIGNED_BY_ID": 1690,
-            "ADDRESS": case.respondent.address,
+            "ADDRESS": case.target.address,
             "UF_CRM_1759395470157": bl_phones,
             "UF_CRM_1759395435927": bl_emails,
             "UF_CRM_1768373813": FILTERS_B24[filter_id],
         }
 
         # Добавляем ФИО если удалось получить
-        name = get_name(case.respondent.ogrn)
+        name = get_name(case.target.ogrn)
         if name is not None:
             if len(name) >= 4:
                 full_name = name.split(' ')
@@ -203,8 +203,8 @@ class BitrixConnect:
                     fields["LAST_NAME"] = full_name[0]
                     fields["NAME"] = full_name[1]
                     fields["SECOND_NAME"] = full_name[2]
-            elif 'Индивидуальный предприниматель' in case.respondent.name:
-                name_parts = case.respondent.name.split()
+            elif 'Индивидуальный предприниматель' in case.target.name:
+                name_parts = case.target.name.split()
                 if len(name_parts) >= 5:
                     fields["LAST_NAME"] = name_parts[2]
                     fields["NAME"] = name_parts[3]

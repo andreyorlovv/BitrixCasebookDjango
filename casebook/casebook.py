@@ -312,8 +312,8 @@ class Side:
 @dataclasses.dataclass
 class Case:
     sum_: float
-    plaintiff: Side
-    respondent: Side
+    other_side: Side
+    target: Side
     court: str
     url: str
     number: str
@@ -665,8 +665,8 @@ class Casebook:
                     pass
 
                 case_ = Case(
-                    plaintiff=plaintiff,
-                    respondent=respondent,
+                    other_side=plaintiff,
+                    target=respondent,
                     court=case['instancesInternal'][0]['court'],
                     url=f'https://casebook.ru/card/case/{case["caseId"]}',
                     number=case['caseNumber'],
@@ -822,13 +822,15 @@ class Casebook:
         else: return False
 
     def get_cases_via_excel(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True, filter_id=None,
-                  scan_or=False, ignore_other_tasks_processed=False, task_id=None, judj_check=False, start_date=None, white_list_inn: str=None, excel=None):
+                  scan_or=False, ignore_other_tasks_processed=False, task_id=None, judj_check=False, start_date=None,
+                            white_list_inn: str=None, excel=None, scan_p_bl=False, scan_r_bl=True):
         if excel:
             df = pd.read_csv(
                 excel,
                 sep=';',
                 encoding='windows-1251',
                 quotechar='"',
+                dayfirst=True
             )
         else:
             i = 0
@@ -1009,9 +1011,11 @@ class Casebook:
                                   address=address_stub) if respondent_name else None
 
                 # Проверка Черного списка (Blacklist)
-                for inn_to_check in [plaintiff_inn, respondent_inn]:
-                    if inn_to_check and inn_to_check in blacklist_inns:
-                        raise BlackListException(f"{inn_to_check} в черном списке")
+                if plaintiff_inn and plaintiff_inn in blacklist_inns and scan_p_bl:
+                    raise BlackListException(f"{plaintiff_inn} в черном списке (истец)")
+
+                if respondent_inn and respondent_inn in blacklist_inns and scan_r_bl:
+                    raise BlackListException(f"{respondent_inn} в черном списке (истец)")
 
                 # Проверка Стоп-листов
                 if respondent and scan_r:
@@ -1095,8 +1099,8 @@ class Casebook:
 
                 # Собираем валидный инстанс структуры Case
                 case_ = Case(
-                    plaintiff=plaintiff,
-                    respondent=respondent,
+                    other_side=plaintiff,
+                    target=respondent,
                     court=str(row['Суд']).strip() if pd.notna(row['Суд']) else "",
                     url=case_url,
                     number=case_number,

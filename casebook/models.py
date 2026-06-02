@@ -1,3 +1,4 @@
+import datetime
 from email.policy import default
 
 from django.db import models
@@ -53,6 +54,10 @@ class Tasks(models.Model):
     cash = models.IntegerField(blank=True, null=True, verbose_name='Минимальная сумма')
     scan_p = models.BooleanField(default=False, verbose_name='Применять стоп-слова на истцов')
     scan_r = models.BooleanField(default=False, verbose_name='Применять стоп-слова на ответчиков')
+
+    scan_p_bl = models.BooleanField(default=False, verbose_name='Применять черный список ИНН на истцов')
+    scan_r_bl = models.BooleanField(default=False, verbose_name='Применять черный список ИНН на ответчиков')
+
     scan_or = models.BooleanField(default=False, verbose_name='Применять стоп-слова на поле `OtherRespondent`')
     regex_p = models.CharField(default=None, null=True, blank=True, verbose_name='Регулярное выражение для истцов (в разработке)')
     regex_r = models.CharField(default=None, null=True, blank=True, verbose_name='Регулярное выражение для ответчиков (в разработке)')
@@ -61,7 +66,7 @@ class Tasks(models.Model):
     emails = models.IntegerField(blank=True, null=True, verbose_name='Кол-во email')
     check_for_judj_orders = models.BooleanField(blank=True, null=True, default=False, verbose_name='Проверять на судебный приказ')
 
-    white_list_inn = models.TextField(blank=True, null=True, default=None, verbose_name='Список белых ИНН (для авторских)')
+    white_list_inn = models.TextField(blank=True, null=True, default=None, verbose_name='Список белых ИНН (<b>DEPRECATED</b> к удалению)')
 
     def __str__(self):
         return f'{Filter.objects.get(filter_id=self.filter_id).name} - {self.last_execution}'
@@ -86,6 +91,18 @@ class BlackList(models.Model):
                                 ('phone', 'Номер телефона'),
                                 ('email_mask', 'Домен эл.почты')
                             ])
+
+    source = models.CharField(max_length=8, verbose_name="Источник",
+                              choices=[
+                                  ('api', 'По API из Б24'),
+                                  ('manual', 'Создано вручную'),
+                                  ('excel', 'Массовая загрузка через Excel'),
+                              ], default='manual', blank=True)
+
+    created_at = models.DateTimeField(default=datetime.datetime.now(),
+                                      blank=True,
+                                      verbose_name="Дата и время создания"
+                                      )
 
     def __str__(self):
         return f'{self.value} | {self.type}'
