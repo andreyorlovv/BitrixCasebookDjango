@@ -364,7 +364,7 @@ def scan_enchanted_manual(self, task_id, excel):
                                 bitrix_lead_id=result,
                                 from_task=cached_filter,
                                 contacts=case.contacts_info,
-                                error_message=json.dumps(case),
+                                error_message=json.dumps(asdict(case)),
                             )
                             logger.info(f"Successfully created lead for {case.number}: {result}")
 
