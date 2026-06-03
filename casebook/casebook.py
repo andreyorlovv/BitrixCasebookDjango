@@ -1060,21 +1060,22 @@ class Casebook:
 
                 # Парсинг даты регистрации
                 reg_date_raw = row['Дата регистрации дела']
-                if pd.notna(reg_date_raw):
-                    if isinstance(reg_date_raw, str):
-                        try:
-                            if 'T' in reg_date_raw:
-                                reg_date = datetime.datetime.fromisoformat(reg_date_raw.split('T')[0]).date()
-                            else:
-                                reg_date = pd.to_datetime(reg_date_raw).date()
-                        except ValueError:
-                            reg_date = datetime.datetime.now().date()
-                    else:
-                        reg_date = reg_date_raw.date() if hasattr(reg_date_raw,
-                                                                  'date') else datetime.datetime.now().date()
-                    # reg_date = reg_date_raw 
-                else:
-                    reg_date = datetime.datetime.now().date()
+                reg_date = datetime.datetime.strptime(reg_date_raw, '%d.%m.%Y').date()
+                # if pd.notna(reg_date_raw):
+                #     if isinstance(reg_date_raw, str):
+                #         try:
+                #             if 'T' in reg_date_raw:
+                #                 reg_date = datetime.datetime.fromisoformat(reg_date_raw.split('T')[0]).date()
+                #             else:
+                #                 reg_date = pd.to_datetime(reg_date_raw).date()
+                #         except ValueError:
+                #             reg_date = datetime.datetime.now().date()
+                #     else:
+                #         reg_date = reg_date_raw.date() if hasattr(reg_date_raw,
+                #                                                   'date') else datetime.datetime.now().date()
+                #     # reg_date = reg_date_raw 
+                # else:
+                #     reg_date = datetime.datetime.now().date()
 
                 category_text = str(row['Категория спора']).strip() if pd.notna(row['Категория спора']) else ""
                 type_text = str(row['Вид спора']).strip() if pd.notna(row['Вид спора']) else ""
