@@ -3,7 +3,7 @@ import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import traceback
-
+from dataclasses import asdict
 
 import requests
 from celery import shared_task
