@@ -1104,7 +1104,7 @@ class Casebook:
                     court=str(row['Суд']).strip() if pd.notna(row['Суд']) else "",
                     url=case_url,
                     number=case_number,
-                    reg_date=reg_date_raw,
+                    reg_date=reg_date,
                     _type={
                         "caseTypeM": "",
                         "caseTypeENG": type_text
