@@ -195,7 +195,10 @@ class BitrixConnect:
         }
 
         # Добавляем ФИО если удалось получить
-        name = get_name(case.target.ogrn)
+
+        name = case.target.ceo
+
+        # name = get_name(case.target.ogrn)
         if name is not None:
             if len(name) >= 4:
                 full_name = name.split(' ')

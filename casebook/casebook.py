@@ -307,6 +307,7 @@ class Side:
     inn: str
     ogrn: str
     address: str | None = None
+    ceo: str | None = None
 
 
 @dataclasses.dataclass

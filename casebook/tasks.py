@@ -313,7 +313,7 @@ def scan_enchanted_manual(self, task_id, excel):
                     if should_process:
                         # Получаем контакты с обработкой timeout
                         try:
-                            case.contacts_info = get_contacts_via_export_base(
+                            case.contacts_info, case.target.address, case.target.ceo = get_contacts_via_export_base(
                                 ogrn=case.target.ogrn,
                                 inn=case.target.inn,
                                 key=settings.EXPORT_BASE_API_KEY

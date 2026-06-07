@@ -325,6 +325,9 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         print(f"Не удалось разобрать ответ export-base: {e}")
         return empty_result
 
+    address = data.get('address')
+    ceo_name = data.get('ceo_name')
+
     # Собираем телефоны: стационарный + мобильный, разделители ", "
     number_list = []
     for field in ('stationary_phone', 'mobile_phone'):
@@ -342,6 +345,20 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         if part:
             email_list.append(part)
 
+    # Чёрный список выгружаем один раз, чтобы не дёргать БД в цикле
+    blocklist_values = set(BlackList.objects.values_list('value', flat=True))
+    blocklist_values_lower = {v.lower() for v in blocklist_values if v}
+    email_masks = [
+        m.lower().lstrip('@')
+        for m in BlackList.objects.filter(type='email_mask').values_list('value', flat=True)
+        if m
+    ]
+
+    def domain_blacklisted(domain: str) -> bool:
+        """Домен в ЧС, если он равен маске или является её поддоменом."""
+        domain = domain.lower()
+        return any(domain == mask or domain.endswith('.' + mask) for mask in email_masks)
+
     # Нормализация и фильтрация телефонов по чёрному списку
     valid_numbers = []
     blacklisted_numbers = []
@@ -349,20 +366,20 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         number = normalize_number(number)
         if not number:
             continue
-        if BlackList.objects.filter(value=number).exists():
+        if number in blocklist_values:
             blacklisted_numbers.append(number)
         else:
             valid_numbers.append(number)
 
-    # Фильтрация email по чёрному списку (значение + маска домена)
+    # Фильтрация email по чёрному списку (точное значение + маска домена)
     result_email = []
     blacklisted_emails = []
     for email in email_list:
-        domain = email.split('@')[1] if '@' in email else ''
+        email_norm = email.strip().lower()
+        domain = email_norm.rpartition('@')[2]  # часть после последней @
         is_blacklisted = (
-            BlackList.objects.filter(value=email).exists()
-            or (domain and BlackList.objects.filter(
-                type='email_mask', value__contains=domain).exists())
+                email_norm in blocklist_values_lower
+                or (domain and domain_blacklisted(domain))
         )
         if is_blacklisted:
             blacklisted_emails.append(email)
@@ -379,7 +396,7 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
 
     print("Полученные контакты -", {'numbers': valid_numbers, 'emails': result_email})
 
-    return result
+    return result, address, ceo_name
 
 # if __name__ == "__main__":
 #     print(get_name('1105250003044'))
