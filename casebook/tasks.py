@@ -3,7 +3,7 @@ import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import traceback
-
+from dataclasses import asdict
 
 import requests
 from celery import shared_task
@@ -364,7 +364,7 @@ def scan_enchanted_manual(self, task_id, excel):
                                 bitrix_lead_id=result,
                                 from_task=cached_filter,
                                 contacts=case.contacts_info,
-                                error_message=json.dumps(case),
+                                error_message=case
                             )
                             logger.info(f"Successfully created lead for {case.number}: {result}")
 
