@@ -37,7 +37,7 @@ CASEBOOK_LOGIN = os.getenv('CASEBOOK_LOGIN')
 CASEBOOK_PASSWORD = os.getenv('CASEBOOK_PASSWORD')
 
 EXPORT_BASE_API_KEY = os.getenv('EXPORT_BASE_API_KEY')
-
+CHECKO_API_KEY = os.getenv('CHECKO_API_KEY')
 # Application definition
 
 CELERY_TIMEZONE = "Europe/Moscow"

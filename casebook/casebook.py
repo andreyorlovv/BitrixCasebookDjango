@@ -555,7 +555,7 @@ class Casebook:
                     else:
                         _other += 1
 
-                if _respondent > 1:
+                if _respondent > 1 and to_load == 1:
                     models.Case.objects.create(
                         process_date=datetime.datetime.now(),
                         case_id=case['caseNumber'],
@@ -1016,7 +1016,7 @@ class Casebook:
                     raise BlackListException(f"{plaintiff_inn} в черном списке (истец)")
 
                 if respondent_inn and respondent_inn in blacklist_inns and scan_r_bl:
-                    raise BlackListException(f"{respondent_inn} в черном списке (истец)")
+                    raise BlackListException(f"{respondent_inn} в черном списке (ответчик)")
 
                 # Проверка Стоп-листов
                 if respondent and scan_r:

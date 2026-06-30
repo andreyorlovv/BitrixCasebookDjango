@@ -12,6 +12,9 @@
             <div class="card-body">
                 <div style="padding-bottom: 1rem" class="col">
                     <b>Осталось запросов к ExportBase - {{ remaining_export_base }}</b>
+                    {% if remaining_checko %}
+                        <br><b>Остаток баланса Checko - {{ remaining_checko }}</b>
+                    {% endif %}
                 </div>
                 <form method="post">
                     {% csrf_token %}

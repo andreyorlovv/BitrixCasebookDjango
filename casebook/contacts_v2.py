@@ -1,302 +1,115 @@
-import datetime
 import json
 import os
-from typing import Tuple, List, Any
+import re
 
 import requests
-import re
-from bs4 import BeautifulSoup
-from lxml import etree
-import sqlite3
-
 from requests.exceptions import SSLError
 
 from casebook.models import BlackList
 
 
-def find_phone(text):
-    lines = text.split('\n')
-    for line in lines:
-        if "+7" in line:
-            return line
+# ---------------------------------------------------------------------------
+# Контракт всех функций получения контактов — КОРТЕЖ:
+#   (result, address, ceo_name)
+# где result:
+#   {
+#       'numbers':           [<str>, ...],   # валидные телефоны (7XXXXXXXXXX)
+#       'emails':            [<str>, ...],   # валидные email
+#       'blacklist_numbers': [<str>, ...],   # телефоны, попавшие в ЧС
+#       'blacklist_emails':  [<str>, ...],   # email, попавшие в ЧС
+#   }
+#   address  - <str|None> юр. адрес
+#   ceo_name - <str|None> ФИО руководителя
+# ---------------------------------------------------------------------------
 
 
-def find_mail(text):
-    lines = text.split('\n')
-    for line in lines:
-        if "@" in line:
-            return line
+def _empty_result():
+    """Пустой результат в кортежном контракте: (dict, address, ceo_name)."""
+    return (
+        {
+            'numbers': [],
+            'emails': [],
+            'blacklist_numbers': [],
+            'blacklist_emails': [],
+        },
+        None,
+        None,
+    )
 
 
-def process_string(input_string, number_list):
-    try:
-        pattern = re.compile(r'\+7\s\d{3}\s\d{3}-\d{2}-\d{2}|\+8\s\d{3}\s\d{3}-\d{2}-\d{2}')
-        matches = pattern.findall(input_string)
-        for match in matches:
-            number_list.append(match)
-        return number_list
-    except Exception as e:
-        pass
-
-
-def process_email_string(input_string, email_list):
-    try:
-        if not isinstance(input_string, str):
-            input_string = str(input_string)
-        domain_pattern = re.compile(r'([^\s]+?\.(com|ru|net|org|gov|edu|int|mil|co|uk|de|fr|es|it|nl|ca|au|jp|us))')
-        matches = domain_pattern.findall(input_string)
-        email = [f"{match[0]}" for match in matches]
-        email_list.extend(email)
-        return email_list
-    except Exception as e:
-        pass
-
-
-def remove_duplicates(input_list):
-    try:
-        unique_list = list(set(input_list))
-        return unique_list
-    except Exception as e:
-        pass
-
-
-def process_checko_phone(ogrn):
-    url = f"https://checko.ru/company/{ogrn}/contacts"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"
-    }
-    response = requests.get(url, headers=headers, timeout=15)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
-        phone_pattern = re.compile(r'\+7 \d{3} \d{3}-\d{2}-\d{2}')
-        phones = phone_pattern.findall(soup.text)
-        return phones
-
-
-def process_checko_email(ogrn):
-    url = f"https://checko.ru/company/{ogrn}/contacts"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"
-    }
-    response = requests.get(url, headers=headers, timeout=15)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
-        email_pattern = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
-        emails = email_pattern.findall(soup.text)
-        emails = list(set(emails))
-        return emails
-
-
-def get_name(ogrn: str) -> str:
-    inn = str(ogrn)
-    url = f"https://checko.ru/company/{ogrn}"
-    headers = {
-        'User-Agent': 'Mozila/5.0(Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                      'Chrome/91.0.4472.124 Safari/537.36'}
-    try:
-        response = requests.get(url, headers=headers, timeout=15)
-        soup2 = BeautifulSoup(response.text, "html.parser")
-        dom = etree.HTML(str(soup2))
-        return dom.xpath("/html/body/main/div[2]/div/article/div/div[4]/div[2]/div[1]/div/div[2]/a")[0].text
-    except Exception as e:
-        pass
-
-
-def process_sbis_base(inn):
-    try:
-        connection = sqlite3.connect('contacts.sqlite')
-        cursor = connection.cursor()
-        result = cursor.execute(f'SELECT email, phones FROM contacts_contact WHERE inn={inn}').fetchone()
-        return json.loads(result[0]), json.loads(result[1])
-    except Exception as e:
-        pass
-
-
-def process_listorg(ogrn, inn):
-    """
-    Маленькое лимитирование по количеству запросов, пасс
-    """
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36"
-    }
-    response = requests.get(f"https://www.list-org.com/search?val={ogrn}&type=all&sort=", headers=headers, timeout=15)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    company_tag = soup.find('a', href=lambda x: x and '/company/' in x)  # , name=lambda x: x and '/company/' in x)
-    if company_tag:
-        company_link = company_tag['href']
-        full_link = f"https://www.list-org.com{company_link}"  # Формируем полный URL
-    else:
-        return None
-    response = requests.get(full_link, headers=headers, timeout=15)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    pattern = re.compile(r"\+7\s?\(?\d{3,5}\)?\s?\d{1,3}-\d{2}-\d{2}")
-    phones = pattern.findall(soup.text)
-    return phones
-
-
-def get_contacts(inn, ogrn):
-    if os.environ.get('local_debug') == 'True':
-        return {'numbers': [],
-                'emails': [],
-                'blacklist_numbers': [],
-                'blacklist_emails': []}
-
-    number_list = []
-    email_list = []
-    try:
-        number_list.extend(process_checko_phone(ogrn))
-        email_list.extend(process_checko_email(ogrn))
-    except TypeError:
-        pass
-    try:
-        email_from_sbis, numbers_from_sbis = process_sbis_base(inn)
-        number_list.extend(numbers_from_sbis)
-        email_list.extend(email_from_sbis)
-    except TypeError:
-        pass
-    except Exception as e:
-        print(e)       
-    valid_numbers = []
-    blacklisted_numbers = []
-    for number in number_list:
-        if number == '':
-            continue
-        if number[0] == '8':
-            number = '7' + number[1:]
-        number = number.replace('+7', '7')
-        number = number.replace(' ', '')
-        number = number.replace('(', '')
-        number = number.replace(')', '')
-        number = number.replace('-', '')
-        if not BlackList.objects.filter(value=number).exists():
-            valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
-        else:
-            blacklisted_numbers.append(number)
-            
-    result_email = []
-    blacklisted_emails = []
-    for email in email_list:
-        if not BlackList.objects.filter(value=email).exists() and not BlackList.objects.filter(type='email_mask', value__contains=email.split('@')[1]).exists():
-            result_email.append(email)
-        else:
-            blacklisted_emails.append(email)
-    result_numbers = list(set(valid_numbers))
-    result_email = list(set(email_list))
-
-    return {'numbers': result_numbers,
-            'emails': result_email,
-             'blacklist_numbers': blacklisted_numbers,
-             'blacklist_emails': blacklisted_emails}
-
-
-def get_contacts_via_export_base_depr(key: str, ogrn: str = None, inn: str = None):
-
-    if os.environ.get('local_debug'):
-        return {'numbers': [],
-                'emails': [],
-                'blacklist_numbers': [],
-                'blacklist_emails': []}
-
-    gc = get_contacts(inn, ogrn)
-    
-    number_list = gc.get('numbers')
-    email_list = gc.get('emails')
-
-    if ogrn and inn:
-        url = f'https://export-base.ru/api/company/?inn={inn}&ogrn={ogrn}&key={key}'
-    elif ogrn:
-        url = f'https://export-base.ru/api/company/?ogrn={ogrn}&key={key}'
-    elif inn:
-        url = f'https://export-base.ru/api/company/?inn={inn}&key={key}'
-    else:
-        url = f'https://export-base.ru/api/company/?inn={inn}&ogrn={ogrn}&key={key}'
-
-    try:
-        response = requests.get(url, timeout=30)  # 30 seconds timeout
-        response.raise_for_status()
-    except requests.exceptions.Timeout:
-        print(f"Timeout getting contacts from export-base for inn={inn}, ogrn={ogrn}")
-        return get_contacts(ogrn=ogrn, inn=inn)
-    except SSLError as e:
-        print(e)
-
-    result_data = json.loads(response.text)
-    try:
-        data = result_data['companies_data'][0]
-    except IndexError as e:
-        return get_contacts(ogrn=ogrn, inn=inn)
-    except Exception as e:
-        return get_contacts(ogrn=ogrn, inn=inn)
-
-    number_list += data['stationary_phone'].split(', +')
-    number_list += data['mobile_phone'].split(', +')
-
-    valid_numbers = []
-
-    for number in number_list:
-        valid_numbers.append(number[:18])
-
-    number_list = valid_numbers
-
-    email_list.append(data['email'].split(', ')[0])
-
-    # number_list = filter(None, number_list)
-    # email_list = filter(None, email_list)
-
-    number_list = list(set(number_list))
-    email_list = list(set(email_list))
-
-    valid_numbers = []
-    blacklisted_numbers = []
-
-    for number in number_list:
-        if number == '':
-            continue
-        if number[0] == '8':
-            number = '7' + number[1:]
-        number = number.replace('+7', '7')
-        number = number.replace(' ', '')
-        number = number.replace('(', '')
-        number = number.replace(')', '')
-        number = number.replace('-', '')
-        valid_numbers.append(number)
-        if not BlackList.objects.filter(value=number).exists():
-            valid_numbers.append(number)  # if (number[0] == '7' and len(number) == 10) or (len(number) == 9) else None
-        else:
-            blacklisted_numbers.append(number)
-
-    result_email = []
-    blacklisted_emails = []
-    for email in email_list:
-        if not BlackList.objects.filter(value=email).exists():
-            result_email.append(email)
-        else:
-            blacklisted_emails.append(email)
-
-    print("Полученные контакты -", {'numbers': valid_numbers,
-                                    'emails': result_email})
-
-    return {'numbers': valid_numbers,
-            'emails': result_email,
-             'blacklist_numbers': blacklisted_numbers,
-             'blacklist_emails': blacklisted_emails}
-
+# ---------------------------------------------------------------------------
+# Нормализация и фильтрация по чёрному списку
+# ---------------------------------------------------------------------------
 
 def normalize_number(number: str) -> str:
     """Приводит телефон к виду 7XXXXXXXXXX (только цифры)."""
-    digits = re.sub(r'\D', '', number)
+    digits = re.sub(r'\D', '', number or '')
     if digits.startswith('8'):
         digits = '7' + digits[1:]
     return digits
 
-def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
-    empty_result = {'numbers': [],
-                    'emails': [],
-                    'blacklist_numbers': [],
-                    'blacklist_emails': []}
 
-    # Формируем URL запроса к export-base
+def _load_blacklist():
+    """
+    Выгружает чёрный список один раз, чтобы не дёргать БД в цикле.
+    Возвращает (values, values_lower, email_masks).
+    """
+    values = set(BlackList.objects.values_list('value', flat=True))
+    values_lower = {v.lower() for v in values if v}
+    email_masks = [
+        m.lower().lstrip('@')
+        for m in BlackList.objects.filter(type='email_mask').values_list('value', flat=True)
+        if m
+    ]
+    return values, values_lower, email_masks
+
+
+def _domain_blacklisted(domain: str, email_masks) -> bool:
+    """Домен в ЧС, если равен маске или является её поддоменом."""
+    domain = domain.lower()
+    return any(domain == mask or domain.endswith('.' + mask) for mask in email_masks)
+
+
+def _filter_numbers(raw_numbers, bl_values):
+    """Нормализует номера и делит на валидные/в чёрном списке."""
+    valid, blacklisted = [], []
+    for number in raw_numbers:
+        number = normalize_number(number)
+        if not number:
+            continue
+        if number in bl_values:
+            blacklisted.append(number)
+        else:
+            valid.append(number)
+    return valid, blacklisted
+
+
+def _filter_emails(raw_emails, bl_values_lower, email_masks):
+    """Делит email на валидные/в чёрном списке (точное значение + маска домена)."""
+    valid, blacklisted = [], []
+    for email in raw_emails:
+        email = (email or '').strip()
+        if not email:
+            continue
+        email_norm = email.lower()
+        domain = email_norm.rpartition('@')[2]  # часть после последней @
+        is_blacklisted = (
+            email_norm in bl_values_lower
+            or (domain and _domain_blacklisted(domain, email_masks))
+        )
+        (blacklisted if is_blacklisted else valid).append(email)
+    return valid, blacklisted
+
+
+# ---------------------------------------------------------------------------
+# ExportBase
+# ---------------------------------------------------------------------------
+
+def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
+    """Контакты из ExportBase API. Возвращает (result, address, ceo_name)."""
+    if os.environ.get('local_debug'):
+        return _empty_result()
+
     params = {'key': key}
     if inn:
         params['inn'] = inn
@@ -304,99 +117,180 @@ def get_contacts_via_export_base(key: str, ogrn: str = None, inn: str = None):
         params['ogrn'] = ogrn
 
     if not inn and not ogrn:
-        return empty_result
-
-    url = 'https://export-base.ru/api/company/'
+        print("Не указан ни inn, ни ogrn для запроса к export-base")
+        return _empty_result()
 
     try:
-        response = requests.get(url, params=params, timeout=30)
+        response = requests.get(
+            'https://export-base.ru/api/company/', params=params, timeout=30
+        )
         response.raise_for_status()
     except requests.exceptions.Timeout:
         print(f"Timeout при запросе к export-base для inn={inn}, ogrn={ogrn}")
-        return empty_result
+        return _empty_result()
     except (SSLError, requests.exceptions.RequestException) as e:
         print(f"Ошибка запроса к export-base: {e}")
-        return empty_result
+        return _empty_result()
 
     try:
-        result_data = json.loads(response.text)
+        result_data = response.json()
         data = result_data['companies_data'][0]
     except (json.JSONDecodeError, KeyError, IndexError) as e:
         print(f"Не удалось разобрать ответ export-base: {e}")
-        return empty_result
+        return _empty_result()
 
     address = data.get('address')
     ceo_name = data.get('ceo_name')
 
-    # Собираем телефоны: стационарный + мобильный, разделители ", "
-    number_list = []
+    # Телефоны: стационарный + мобильный, разделители ", "
+    raw_numbers = []
     for field in ('stationary_phone', 'mobile_phone'):
         raw = data.get(field) or ''
-        for part in raw.split(','):
-            part = part.strip()
-            if part:
-                number_list.append(part)
+        raw_numbers += [p.strip() for p in raw.split(',') if p.strip()]
 
-    # Собираем email-адреса (в поле могут быть перечислены через ", ")
-    email_list = []
-    raw_emails = data.get('email') or ''
-    for part in raw_emails.split(','):
-        part = part.strip()
-        if part:
-            email_list.append(part)
+    # Email-адреса (в поле могут быть перечислены через ", ")
+    raw_emails = [p.strip() for p in (data.get('email') or '').split(',') if p.strip()]
 
-    # Чёрный список выгружаем один раз, чтобы не дёргать БД в цикле
-    blocklist_values = set(BlackList.objects.values_list('value', flat=True))
-    blocklist_values_lower = {v.lower() for v in blocklist_values if v}
-    email_masks = [
-        m.lower().lstrip('@')
-        for m in BlackList.objects.filter(type='email_mask').values_list('value', flat=True)
-        if m
-    ]
+    bl_values, bl_values_lower, email_masks = _load_blacklist()
+    valid_numbers, blacklisted_numbers = _filter_numbers(raw_numbers, bl_values)
+    valid_emails, blacklisted_emails = _filter_emails(raw_emails, bl_values_lower, email_masks)
 
-    def domain_blacklisted(domain: str) -> bool:
-        """Домен в ЧС, если он равен маске или является её поддоменом."""
-        domain = domain.lower()
-        return any(domain == mask or domain.endswith('.' + mask) for mask in email_masks)
-
-    # Нормализация и фильтрация телефонов по чёрному списку
-    valid_numbers = []
-    blacklisted_numbers = []
-    for number in number_list:
-        number = normalize_number(number)
-        if not number:
-            continue
-        if number in blocklist_values:
-            blacklisted_numbers.append(number)
-        else:
-            valid_numbers.append(number)
-
-    # Фильтрация email по чёрному списку (точное значение + маска домена)
-    result_email = []
-    blacklisted_emails = []
-    for email in email_list:
-        email_norm = email.strip().lower()
-        domain = email_norm.rpartition('@')[2]  # часть после последней @
-        is_blacklisted = (
-                email_norm in blocklist_values_lower
-                or (domain and domain_blacklisted(domain))
-        )
-        if is_blacklisted:
-            blacklisted_emails.append(email)
-        else:
-            result_email.append(email)
-
-    valid_numbers = list(set(valid_numbers))
-    result_email = list(set(result_email))
-
-    result = {'numbers': valid_numbers,
-              'emails': result_email,
-              'blacklist_numbers': blacklisted_numbers,
-              'blacklist_emails': blacklisted_emails}
-
-    print("Полученные контакты -", {'numbers': valid_numbers, 'emails': result_email})
-
+    result = {
+        'numbers': list(set(valid_numbers)),
+        'emails': list(set(valid_emails)),
+        'blacklist_numbers': blacklisted_numbers,
+        'blacklist_emails': blacklisted_emails,
+    }
+    print("ExportBase контакты -", {'numbers': result['numbers'], 'emails': result['emails']})
     return result, address, ceo_name
 
-# if __name__ == "__main__":
-#     print(get_name('1105250003044'))
+
+# ---------------------------------------------------------------------------
+# Checko
+# ---------------------------------------------------------------------------
+
+def _extract_checko_address(data):
+    ur_addr = data.get('ЮрАдрес')
+    if isinstance(ur_addr, dict):
+        return ur_addr.get('АдресРФ')
+    if isinstance(ur_addr, str):
+        return ur_addr
+    return None
+
+
+def _extract_checko_ceo(data):
+    rukovod = data.get('Руковод')
+    if isinstance(rukovod, list):
+        for person in rukovod:
+            if isinstance(person, dict) and person.get('ФИО'):
+                return person['ФИО']
+    return None
+
+
+def get_contacts_via_checko(key: str, ogrn: str = None, inn: str = None):
+    """Контакты из Checko API (v2/company). Возвращает (result, address, ceo_name)."""
+    if os.environ.get('local_debug'):
+        return _empty_result()
+
+    params = {'key': key}
+    if inn:
+        params['inn'] = inn
+    elif ogrn:
+        params['ogrn'] = ogrn
+    else:
+        print("Не указан ни inn, ни ogrn для запроса к Checko")
+        return _empty_result()
+
+    try:
+        response = requests.get(
+            'https://api.checko.ru/v2/company', params=params, timeout=30
+        )
+        response.raise_for_status()
+    except requests.exceptions.Timeout:
+        print(f"Timeout при запросе к Checko для inn={inn}, ogrn={ogrn}")
+        return _empty_result()
+    except (SSLError, requests.exceptions.RequestException) as e:
+        print(f"Ошибка запроса к Checko: {e}")
+        return _empty_result()
+
+    try:
+        payload = response.json()
+    except json.JSONDecodeError as e:
+        print(f"Не удалось разобрать ответ Checko: {e}")
+        return _empty_result()
+
+    meta = payload.get('meta') or {}
+    if meta.get('status') != 'ok':
+        print(f"Checko вернул статус != ok: {meta.get('message')}")
+        return _empty_result()
+
+    data = payload.get('data') or {}
+    contacts = data.get('Контакты') or {}
+    raw_phones = contacts.get('Тел') or []
+    raw_emails = contacts.get('Емэйл') or []
+
+    bl_values, bl_values_lower, email_masks = _load_blacklist()
+    valid_numbers, blacklisted_numbers = _filter_numbers(raw_phones, bl_values)
+    valid_emails, blacklisted_emails = _filter_emails(raw_emails, bl_values_lower, email_masks)
+
+    result = {
+        'numbers': list(set(valid_numbers)),
+        'emails': list(set(valid_emails)),
+        'blacklist_numbers': blacklisted_numbers,
+        'blacklist_emails': blacklisted_emails,
+    }
+    print("Checko контакты -", {'numbers': result['numbers'], 'emails': result['emails']})
+    return result, _extract_checko_address(data), _extract_checko_ceo(data)
+
+
+# ---------------------------------------------------------------------------
+# Агрегатор
+# ---------------------------------------------------------------------------
+
+def _merge_contact_results(*results):
+    """Объединяет несколько словарей-результатов, схлопывая дубликаты."""
+    numbers, emails, bl_numbers, bl_emails = set(), set(), set(), set()
+    for r in results:
+        if not r:
+            continue
+        numbers.update(r.get('numbers') or [])
+        emails.update(r.get('emails') or [])
+        bl_numbers.update(r.get('blacklist_numbers') or [])
+        bl_emails.update(r.get('blacklist_emails') or [])
+
+    # номер/email, валидный хотя бы в одном источнике, не считаем чёрным
+    bl_numbers -= numbers
+    bl_emails -= emails
+
+    return {
+        'numbers': list(numbers),
+        'emails': list(emails),
+        'blacklist_numbers': list(bl_numbers),
+        'blacklist_emails': list(bl_emails),
+    }
+
+
+def get_contacts_aggregated(export_base_key: str, checko_key: str,
+                            ogrn: str = None, inn: str = None):
+    """
+    Последовательный вызов обоих сервисов с объединением результата.
+    Сначала ExportBase, затем Checko.
+    Возвращает (result, address, ceo_name) — единый кортежный контракт.
+    """
+    if os.environ.get('local_debug'):
+        return _empty_result()
+
+    eb_result, eb_address, eb_ceo = get_contacts_via_export_base(
+        export_base_key, ogrn=ogrn, inn=inn
+    )
+    checko_result, checko_address, checko_ceo = get_contacts_via_checko(
+        checko_key, ogrn=ogrn, inn=inn
+    )
+
+    merged = _merge_contact_results(eb_result, checko_result)
+
+    # address/ceo_name берём из первого непустого источника (приоритет ExportBase)
+    address = checko_address or eb_address
+    ceo_name = checko_ceo or eb_ceo
+
+    return merged, address, ceo_name

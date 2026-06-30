@@ -313,10 +313,11 @@ def scan_enchanted_manual(self, task_id, excel):
                     if should_process:
                         # Получаем контакты с обработкой timeout
                         try:
-                            case.contacts_info, case.target.address, case.target.ceo = get_contacts_via_export_base(
+                            case.contacts_info, case.target.address, case.target.ceo = get_contacts_aggregated(
                                 ogrn=case.target.ogrn,
                                 inn=case.target.inn,
-                                key=settings.EXPORT_BASE_API_KEY
+                                export_base_key=settings.EXPORT_BASE_API_KEY,
+                                checko_key=settings.CHECKO_API_KEY
                             )
                         except requests.exceptions.Timeout:
                             logger.warning(f"Timeout getting contacts for {case.number}")
@@ -342,6 +343,8 @@ def scan_enchanted_manual(self, task_id, excel):
                             case.contacts_info['emails'] = case.contacts_info['emails'][0:task.emails]
 
                         # Создаем лид в Bitrix24
+                        time.sleep(1)
+
                         try:
                             # Определяем права на основе filter_id
                             if task.filter_id == '558875':

@@ -67,8 +67,33 @@ def custom_index(request):
     except Exception as e:
         if os.environ.get('local_debug') == 'True':
             remaining_export_base = 'Локальное окружение, взаимодействия с ExportBase отключено'
+
+    from django.core.cache import cache
+    remaining_checko = cache.get('checko_balance')
+    if remaining_checko is None:
+        try:
+            checko_resp = requests.get(
+                'https://api.checko.ru/v2/company',
+                params={'key': settings.CHECKO_API_KEY, 'inn': '7707083893'},
+                timeout=15,
+            )
+            checko_resp.raise_for_status()
+            remaining_checko = (checko_resp.json().get('meta') or {}).get('balance')
+            if remaining_checko is not None:
+                cache.set('checko_balance', remaining_checko, timeout=600)  # 10 мин
+        except requests.exceptions.Timeout:
+            remaining_checko = 'Ошибка подключения к Checko (timeout)'
+        except SSLError:
+            remaining_checko = 'Ошибка подключения к Checko (SSL)'
+        except Exception as e:
+            print(e)
+            remaining_checko = ('Локальное окружение, Checko отключён'
+                                if os.environ.get('local_debug') == 'True' else None)
+
     extra_context = {'filters': filters, 'form_create': form_create,
-                     'tasks': tasks_to_render, 'remaining_export_base': remaining_export_base}
+                     'tasks': tasks_to_render,
+                     'remaining_export_base': remaining_export_base,
+                     'remaining_checko': remaining_checko}
     return site.index(request, extra_context=extra_context)
 
 
