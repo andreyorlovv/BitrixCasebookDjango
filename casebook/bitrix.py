@@ -6,7 +6,6 @@ from dateutil import parser
 from fast_bitrix24 import Bitrix
 
 from .casebook import Case
-from .contacts_v2 import get_name
 from .models import Case as CaseModel, Filter
 
 courts = {
