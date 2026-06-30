@@ -576,6 +576,14 @@ class Casebook:
                 cases_to_process.append(case)
             elif not CaseModel.objects.filter(case_id=case['caseNumber'], from_task__id=task_id).exists() and ignore_other_tasks_processed:
                     cases_to_process.append(case)
+            else:
+                models.Case.objects.create(
+                    process_date=datetime.datetime.now(),
+                    case_id=case['caseNumber'],
+                    is_success=False,
+                    error_message='Уже учтен в рамках другой подборки',
+                    from_task=filter_obj
+                )
         cases = cases_to_process
         # Загружаем stoplist один раз
         stoplist = list(StopList.objects.all())
