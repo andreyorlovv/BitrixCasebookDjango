@@ -15,7 +15,7 @@ from requests import JSONDecodeError
 from requests.exceptions import SSLError
 
 from casebook.bitrix import BitrixConnect
-from casebook.contacts_v2 import get_contacts_via_export_base, get_contacts
+from casebook.contacts_v2 import get_contacts_via_export_base, get_contacts_aggregated
 from casebook.models import Filter, Case, Tasks, InfoDealB24
 
 
