@@ -47,6 +47,7 @@ jobs:
             echo "CASEBOOK_PASSWORD=${{ secrets.CASEBOOK_PASSWORD }}" >> /home/docker/BitrixCasebookDjango/.env
             echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> /home/docker/BitrixCasebookDjango/.env
             echo "EXPORT_BASE_API_KEY=${{ secrets.EXPORT_BASE_API_KEY }}" >> /home/docker/BitrixCasebookDjango/.env
+            echo "CHECKO_API_KEY=${{ secrets.CHECKO_API_KEY }}" >> /home/docker/BitrixCasebookDjango/.env
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.10
