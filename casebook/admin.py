@@ -8,7 +8,7 @@ from django.urls import path
 
 import casebook.tasks
 from casebook.forms import ExcelReportForm
-from casebook.models import Case, StopList, BlackList, Tasks, InfoDealB24, RequestCounter
+from casebook.models import Case, StopList, BlackList, Tasks, InfoDealB24, RequestCounter, Filter
 
 
 # Register your models here.
@@ -171,4 +171,5 @@ admin.site.register(BlackList, BlackListAdmin)
 admin.site.register(Tasks)
 admin.site.register(InfoDealB24, InfoDealB24Admin)
 admin.site.register(RequestCounter, RequestCounterAdmin)
+admin.site.register(Filter)
 admin.site.site_header = 'Парсер Casebook'
