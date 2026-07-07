@@ -7,3 +7,5 @@ celerybeat.log
 contacts.sqlite
 supervisord.log
 gunicorn.log
+backups/dumps/
+backups/backup.log

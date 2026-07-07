@@ -335,6 +335,18 @@ class BlackListException(Exception):
     pass
 
 
+def build_stopword_patterns(stoplist):
+    """
+    Компилирует стоп-слова в regex с границами слов (\\b), чтобы короткие
+    аббревиатуры (АО, ГУ, МУ и т.п.) не срабатывали на подстроку внутри
+    ФИО/названий (например 'ПАО' не должно матчиться внутри 'Паослов').
+    """
+    return [
+        (stopword, re.compile(r'\b' + re.escape(stopword.stopword.strip()) + r'\b', re.IGNORECASE))
+        for stopword in stoplist
+    ]
+
+
 class Casebook:
     def __init__(self, login, password):
         self.limit = 1400
@@ -586,7 +598,7 @@ class Casebook:
                 )
         cases = cases_to_process
         # Загружаем stoplist один раз
-        stoplist = list(StopList.objects.all())
+        stoplist = build_stopword_patterns(StopList.objects.all())
 
         for case in cases:
 
@@ -627,8 +639,8 @@ class Casebook:
                         raise BlackListException(f"{side['inn']} в черном списке")
 
                     if respondent and scan_r:
-                        for stopword in stoplist:
-                            if stopword.stopword.upper() in respondent.name.upper():
+                        for stopword, pattern in stoplist:
+                            if pattern.search(respondent.name):
                                 models.Case.objects.create(
                                     process_date=datetime.datetime.now(),
                                     case_id=case['caseNumber'],
@@ -638,8 +650,8 @@ class Casebook:
                                 )
                                 raise GetOutOfLoop
                     if side['nSideTypeEnum'] == 'OtherRespondent' and scan_or:
-                        for stopword in stoplist:
-                            if stopword.stopword.upper() in side['name'].upper():
+                        for stopword, pattern in stoplist:
+                            if pattern.search(side['name']):
                                 models.Case.objects.create(
                                     process_date=datetime.datetime.now(),
                                     case_id=case['caseNumber'],
@@ -649,8 +661,8 @@ class Casebook:
                                 )
                                 raise GetOutOfLoop
                     if plaintiff and scan_p:
-                        for stopword in stoplist:
-                            if stopword.stopword.upper() in plaintiff.name.upper():
+                        for stopword, pattern in stoplist:
+                            if pattern.search(plaintiff.name):
                                 models.Case.objects.create(
                                     process_date=datetime.datetime.now(),
                                     case_id=case['caseNumber'],
@@ -898,7 +910,7 @@ class Casebook:
         # Предварительная оптимизация: кэшируем данные из БД перед циклом
         filter_obj = Filter.objects.get(filter_id=filter_id) if filter_id else None
         blacklist_inns = set(BlackList.objects.filter(type='inn').values_list('value', flat=True))
-        stoplist = list(StopList.objects.all())
+        stoplist = build_stopword_patterns(StopList.objects.all())
         category_title_to_id = {val['title'].strip().lower(): val['id'] for val in codes.values()}
 
         # Парсинг белого списка ИНН
@@ -1028,8 +1040,8 @@ class Casebook:
 
                 # Проверка Стоп-листов
                 if respondent and scan_r:
-                    for stopword in stoplist:
-                        if stopword.stopword.upper() in respondent.name.upper():
+                    for stopword, pattern in stoplist:
+                        if pattern.search(respondent.name):
                             models.Case.objects.create(
                                 process_date=datetime.datetime.now(),
                                 case_id=case_number,
@@ -1040,8 +1052,8 @@ class Casebook:
                             raise GetOutOfLoop
 
                 if other_side_name and scan_or:
-                    for stopword in stoplist:
-                        if stopword.stopword.upper() in other_side_name.upper():
+                    for stopword, pattern in stoplist:
+                        if pattern.search(other_side_name):
                             models.Case.objects.create(
                                 process_date=datetime.datetime.now(),
                                 case_id=case_number,
@@ -1052,8 +1064,8 @@ class Casebook:
                             raise GetOutOfLoop
 
                 if plaintiff and scan_p:
-                    for stopword in stoplist:
-                        if stopword.stopword.upper() in plaintiff.name.upper():
+                    for stopword, pattern in stoplist:
+                        if pattern.search(plaintiff.name):
                             models.Case.objects.create(
                                 process_date=datetime.datetime.now(),
                                 case_id=case_number,

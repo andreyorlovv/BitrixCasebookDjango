@@ -23,15 +23,25 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
             cd /home/docker/BitrixCasebookDjango/
-            docker compose stop web 
+            docker compose stop web
 
-      # - name: Backup DB
-      #   uses: appleboy/ssh-action@v0.1.10
-      #   with:
-      #     host: ${{ secrets.SERVER_HOST }}
-      #     username: ${{ secrets.SERVER_USER }}
-      #     password: ${{ secrets.SSH_PASSWORD }}
-      #     script: sh /home/docker/BitrixCasebookDjango/backups/scheduled_pg_dump.sh
+      - name: Pull latest code
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            cd /home/docker/BitrixCasebookDjango/
+            git pull
+
+      - name: Backup DB
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: bash /home/docker/BitrixCasebookDjango/backups/scheduled_pg_dump.sh
 
       - name: Copy environment variables to remote server
         uses: appleboy/ssh-action@v0.1.10
@@ -49,7 +59,7 @@ jobs:
             echo "EXPORT_BASE_API_KEY=${{ secrets.EXPORT_BASE_API_KEY }}" >> /home/docker/BitrixCasebookDjango/.env
             echo "CHECKO_API_KEY=${{ secrets.CHECKO_API_KEY }}" >> /home/docker/BitrixCasebookDjango/.env
 
-      - name: Deploy via SSH
+      - name: Start production server
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -57,5 +67,4 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
             cd /home/docker/BitrixCasebookDjango/
-            git pull
             docker compose start web
