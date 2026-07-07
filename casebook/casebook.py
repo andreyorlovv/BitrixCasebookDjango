@@ -348,7 +348,7 @@ def build_stopword_patterns(stoplist):
 
 
 class Casebook:
-    def __init__(self, login, password):
+    def __init__(self, login, password, need_auth=True):
         self.limit = 1400
         self.headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ('
                                       'KHTML, like Gecko) Chrome/118.0.5993.2470 '
@@ -360,7 +360,8 @@ class Casebook:
         self.password = password
         self.http_client = urllib3.PoolManager()
         self.filters = None
-        self.headless_auth(login, password)
+        if need_auth:
+            self.headless_auth(login, password)
         self.http_client.headers.update(self.headers)
 
 

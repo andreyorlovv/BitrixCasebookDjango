@@ -262,11 +262,11 @@ def scan_enchanted_manual(self, task_id, excel):
             logger.error(f"Filter not found for task {task_id}")
             return
 
-        logger.info(f"Starting scan_enchanted for task {task_id}, filter: {filter_.name}")
+        logger.info(f"Starting scan_enchanted_manual for task {task_id}, filter: {filter_.name}")
 
         from casebook.casebook import Casebook
 
-        casebook = Casebook(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD)
+        casebook = Casebook(settings.CASEBOOK_LOGIN, settings.CASEBOOK_PASSWORD, need_auth=task.check_for_judj_orders)
 
         bitrix = BitrixConnect(webhook=settings.BITRIX_CALLBACK)
 
