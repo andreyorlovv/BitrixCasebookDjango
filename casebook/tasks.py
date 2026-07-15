@@ -190,7 +190,8 @@ def scan_enchanted(self, task_id):
                                 is_success=True,
                                 bitrix_lead_id=result,
                                 from_task=cached_filter,
-                                contacts=case.contacts_info
+                                contacts=case.contacts_info,
+                                error_message=case
                             )
                             logger.info(f"Successfully created lead for {case.number}: {result}")
 

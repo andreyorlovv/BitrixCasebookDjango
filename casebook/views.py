@@ -2,6 +2,7 @@ import datetime
 import io
 import json
 import os
+import re
 import tempfile
 
 import xlsxwriter
@@ -11,6 +12,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.utils import timezone
 from requests.exceptions import SSLError
 from rest_framework.decorators import api_view
 
@@ -171,6 +173,33 @@ def process_delete_task(request):
     return redirect('/')
 
 
+# Поля стороны в дампе объекта Case, который сохраняется в error_message успешных дел:
+# ...target=Side(name='...', inn='...', ogrn='...', ...), other_side=Side(name='...', inn='...', ...)...
+_SIDE_STR = r"(None|'.*?'|\".*?\")"
+
+
+def _extract_side(dump, field):
+    """Возвращает (наименование, ИНН) стороны `field` ('target' | 'other_side'),
+    распарсенные из строкового дампа объекта Case в поле error_message.
+    Если дампа нет или он не распознан (например, это реальный текст ошибки) — ('', '')."""
+    if not dump:
+        return '', ''
+
+    match = re.search(
+        field + r"=Side\(name=" + _SIDE_STR + r", inn=" + _SIDE_STR,
+        dump,
+    )
+    if not match:
+        return '', ''
+
+    def _clean(value):
+        if not value or value == 'None':
+            return ''
+        return value[1:-1]  # снимаем обрамляющие кавычки из repr-строки
+
+    return _clean(match.group(1)), _clean(match.group(2))
+
+
 @login_required(login_url='/login/')
 @staff_member_required
 def download_xlsx_view(request):
@@ -189,7 +218,9 @@ def download_xlsx_view(request):
     headers = [
         'id кейса', 'Номер дела в арбитре', 'Дата обработки',
         'Успешно обработано (?)', 'Ошибка, если есть', 'Подборка',
-        'Ссылка на лид в Б24', 'Контакты'
+        'Ссылка на лид в Б24', 'Контакты',
+        'Целевая сторона (наименование)', 'Целевая сторона (ИНН)',
+        'Контрагент (наименование)', 'Контрагент (ИНН)',
     ]
     for col, header in enumerate(headers):
         worksheet.write(0, col, header)
@@ -198,15 +229,26 @@ def download_xlsx_view(request):
     for item in queryset:
         worksheet.write(row, 0, item.id)
         worksheet.write(row, 1, item.case_id)
-        p_date = item.process_date.strftime('%d.%m.%Y') if item.process_date else ''
+        # process_date хранится в UTC (USE_TZ=True) — переводим в локальную зону
+        # (Europe/Moscow), иначе даты возле полуночи уезжают на сутки назад.
+        p_date = timezone.localtime(item.process_date).strftime('%d.%m.%Y') if item.process_date else ''
         worksheet.write(row, 2, p_date)
         worksheet.write(row, 3, 'Да' if item.is_success else 'Нет')
-        worksheet.write(row, 4, item.error_message or '')
+        # У успешных дел в error_message лежит дамп объекта, а не текст ошибки —
+        # в колонку «Ошибка» его не выводим.
+        worksheet.write(row, 4, '' if item.is_success else (item.error_message or ''))
         task_name = item.from_task.name if item.from_task else 'Не указана'
         worksheet.write(row, 5, task_name)
         lead_url = f'https://crm.yk-cfo.ru/crm/lead/details/{item.bitrix_lead_id}' if item.bitrix_lead_id else 'Не загружено'
         worksheet.write(row, 6, lead_url)
         worksheet.write(row, 7, item.contacts if item.contacts else 'Не загружено')
+
+        target_name, target_inn = _extract_side(item.error_message, 'target')
+        other_name, other_inn = _extract_side(item.error_message, 'other_side')
+        worksheet.write(row, 8, target_name)
+        worksheet.write(row, 9, target_inn)
+        worksheet.write(row, 10, other_name)
+        worksheet.write(row, 11, other_inn)
         row += 1
 
     workbook.close()
