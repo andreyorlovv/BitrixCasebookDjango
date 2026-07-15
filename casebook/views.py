@@ -208,8 +208,21 @@ def download_xlsx_view(request):
     date_from = request.GET.get('from')
     date_to = request.GET.get('to')
 
-    if date_from or date_to:
-        queryset = queryset.filter(process_date__range=[date_from, date_to])
+    # process_date хранится в UTC (USE_TZ=True), а даты из формы (<input type="date">,
+    # формат YYYY-MM-DD) — это локальные календарные дни (Europe/Moscow). Границы нужно
+    # сделать timezone-aware в локальной зоне, иначе сравнение с UTC уезжает на сутки.
+    # Конечную дату берём включительно — весь день `to` целиком (< начало следующего дня).
+    tz = timezone.get_current_timezone()
+    if date_from:
+        start = timezone.make_aware(
+            datetime.datetime.strptime(date_from, '%Y-%m-%d'), tz
+        )
+        queryset = queryset.filter(process_date__gte=start)
+    if date_to:
+        end = timezone.make_aware(
+            datetime.datetime.strptime(date_to, '%Y-%m-%d'), tz
+        ) + datetime.timedelta(days=1)
+        queryset = queryset.filter(process_date__lt=end)
 
     output = io.BytesIO()
     workbook = xlsxwriter.Workbook(output, {'in_memory': True})
