@@ -383,6 +383,27 @@ def scan_enchanted_manual(self, task_id, excel):
                             )
                     else:
                         logger.info(f"Case {case.number} already processed, skipping")
+                        # Кейс уже есть в БД — фиксируем это отдельной записью с ошибкой,
+                        # указывая подборку, в рамках которой он был обработан ранее.
+                        existing_case = (
+                            Case.objects
+                            .filter(case_id=case.number)
+                            .exclude(from_task=None)
+                            .select_related('from_task')
+                            .first()
+                        )
+                        processed_filter_name = (
+                            existing_case.from_task.name
+                            if existing_case and existing_case.from_task
+                            else 'Не указана'
+                        )
+                        Case.objects.create(
+                            process_date=datetime.datetime.now(),
+                            case_id=case.number,
+                            is_success=False,
+                            error_message=f'обработано в рамках другой подборки - {processed_filter_name}',
+                            from_task=cached_filter,
+                        )
 
                 except Exception as e:
                     logger.error(f"Error processing case {case.number}: {e}\n{traceback.format_exc()}")
