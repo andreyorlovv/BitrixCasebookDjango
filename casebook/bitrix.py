@@ -8,6 +8,13 @@ from fast_bitrix24 import Bitrix
 from .casebook import Case
 from .models import Case as CaseModel, Filter
 
+UF_CRM_STATUS_V_SUDE_DICT = {
+    1: 2105,
+    0: 2106,
+    3: 2107 # No used
+}
+
+
 courts = {
     'АС Алтайского края': '12606',
     'АС Амурской области': '12607',
@@ -141,7 +148,7 @@ class BitrixConnect:
             self.bitrix = LocalPlaceholderB24()
         else:
             self.bitrix = Bitrix(webhook)
-    def create_lead(self, case: Case, rights, filter_id):
+    def create_lead(self, case: Case, rights, filter_id, target=0):
         if not case.target.inn:
             CaseModel.objects.create(
                 process_date=datetime.now(),
@@ -170,6 +177,11 @@ class BitrixConnect:
         else:
             rights_type = 894
 
+        if target == 0:
+            plaintiff, respondent = case.target, case.other_side
+        else:
+            plaintiff, respondent = case.other_side, case.target
+
         # Базовые поля лида
         fields = {
             "TITLE": case.number,
@@ -191,6 +203,10 @@ class BitrixConnect:
             "UF_CRM_1759395470157": bl_phones,
             "UF_CRM_1759395435927": bl_emails,
             "UF_CRM_1768373813": FILTERS_B24[filter_id],
+
+            "UF_CRM_STATUS_V_SUDE": UF_CRM_STATUS_V_SUDE_DICT[target],
+            "UF_CRM_1730892707": respondent.name,
+            "UF_CRM_ISTEC": plaintiff.name
         }
 
         # Добавляем ФИО если удалось получить

@@ -358,7 +358,7 @@ def scan_enchanted_manual(self, task_id, excel):
                                 rights = str(task.b24_collection) if task.b24_collection else False
 
                             # Создаем лид
-                            result = bitrix.create_lead(case, rights=rights, filter_id=task.filter_id)
+                            result = bitrix.create_lead(case, rights=rights, filter_id=task.filter_id, target=task.to_load)
 
                             # Сохраняем результат в БД
                             Case.objects.create(
