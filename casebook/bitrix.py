@@ -178,10 +178,10 @@ class BitrixConnect:
         else:
             rights_type = 894
 
-        if target == 0:
+        if target == 1:
             plaintiff, respondent = case.target, case.other_side
-        else:
-            plaintiff, respondent = case.other_side, case.target
+        elif target == 0:
+            respondent, plaintiff  = case.target, case.other_side
 
         # Базовые поля лида
         fields = {
