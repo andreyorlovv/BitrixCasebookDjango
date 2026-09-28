@@ -68,7 +68,7 @@ class Tasks(models.Model):
 
     white_list_inn = models.TextField(blank=True, null=True, default=None, verbose_name='Список белых ИНН (<b>DEPRECATED</b> к удалению)')
 
-    ignore_individuals = models.BooleanField(blank=True, null=True, default=False, verbose_name='Игнорировать в подборке физических лиц (ИП)')
+    ignore_individuals = models.BooleanField(default=False, verbose_name='Игнорировать в подборке физических лиц (ИП)')
 
     def __str__(self):
         return f'{Filter.objects.get(filter_id=self.filter_id).name} - {self.last_execution}'
