@@ -290,6 +290,7 @@ def scan_enchanted_manual(self, task_id, excel):
             white_list_inn=task.white_list_inn,
             scan_p_bl=task.scan_p_bl,
             scan_r_bl=task.scan_r_bl,
+            ignore_individuals=task.ignore_individuals,
             excel=excel
         )
 

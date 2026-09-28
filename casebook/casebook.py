@@ -288,6 +288,44 @@ codes = {
     "60.5": {"title": "обращение граждан и организаций на действие (бездействие) судей", "id": 22039}
 }
 
+import re
+
+_IP_RE = re.compile(r"^ИП\s", re.IGNORECASE)
+
+
+def starts_with_ip(name: str) -> bool:
+    """True, если строка начинается с 'ИП ' (регистр не важен, допускается nbsp/табуляция)."""
+    return bool(_IP_RE.match(name.lstrip()))
+
+
+def _inn_checksum_ok(inn: str) -> bool:
+    d = [int(c) for c in inn]
+
+    def ctrl(coefs):
+        return sum(c * x for c, x in zip(coefs, d)) % 11 % 10
+
+    if len(inn) == 10:
+        return ctrl([2, 4, 10, 3, 5, 9, 4, 6, 8]) == d[9]
+    if len(inn) == 12:
+        return (
+            ctrl([7, 2, 4, 10, 3, 5, 9, 4, 6, 8]) == d[10]
+            and ctrl([3, 7, 2, 4, 10, 3, 5, 9, 4, 6, 8]) == d[11]
+        )
+    return False
+
+
+def inn_kind(inn: str) -> str:
+    """'legal_entity' (10 цифр) | 'individual' (12 цифр: ИП / физлицо / самозанятый) | 'invalid'."""
+    inn = inn.strip()
+    if not inn.isdigit() or not _inn_checksum_ok(inn):
+        return "invalid"
+    return "legal_entity" if len(inn) == 10 else "individual"
+
+
+def is_ip(name: str, inn: str) -> bool:
+    """Практическая проверка: 'ИП ' в названии + валидный 12-значный ИНН."""
+    return starts_with_ip(name) and inn_kind(inn) == "individual"
+
 types = {
     "Г": 21814,
     "А": 21813,
@@ -845,7 +883,7 @@ class Casebook:
 
     def get_cases_via_excel(self, filter_source, timedelta, to_load, cash=None, scan_p=False, scan_r=True, filter_id=None,
                   scan_or=False, ignore_other_tasks_processed=False, task_id=None, judj_check=False, start_date=None,
-                            white_list_inn: str=None, excel=None, scan_p_bl=False, scan_r_bl=True):
+                            white_list_inn: str=None, excel=None, scan_p_bl=False, scan_r_bl=True, ignore_individuals=False):
         if excel:
             df = pd.read_csv(
                 excel,
@@ -1079,6 +1117,17 @@ class Casebook:
                 # Инверсия сторон, если задано настройками
                 if to_load == 1:
                     plaintiff, respondent = respondent, plaintiff
+
+                if ignore_individuals:
+                    if is_ip(respondent.name, respondent.inn):
+                        models.Case.objects.create(
+                            process_date=datetime.datetime.now(),
+                            case_id=case_number,
+                            is_success=False,
+                            error_message=f'Целевой стороной является физическое лицо (ИП) \n\n {str(respondent)}',
+                            from_task=filter_obj
+                        )
+                        raise GetOutOfLoop
 
                 # Парсинг даты регистрации
                 reg_date_raw = row['Дата регистрации дела']
