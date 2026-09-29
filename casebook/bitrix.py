@@ -192,7 +192,7 @@ class BitrixConnect:
             "UF_CRM_1702365701": case.number,
             "UF_CRM_1702366987": courts.get(case.court),
             "UF_CRM_1702365740": case.reg_date.isoformat(),
-            "UF_CRM_1702365922": case.other_side.name,
+            "UF_CRM_1702365922": case.other_side.name, # Наименование противоположной стороны
             "UF_CRM_1702365965": case.sum_,
             "PHONE": phones,
             "EMAIL": emails,
@@ -207,7 +207,13 @@ class BitrixConnect:
 
             "UF_CRM_STATUS_V_SUDE": UF_CRM_STATUS_V_SUDE_DICT[target],
             "UF_CRM_1730892707": respondent.name,
-            "UF_CRM_ISTEC": plaintiff.name
+            "UF_CRM_ISTEC": plaintiff.name,
+
+            "UF_CRM_1680093040": case.target.address, # Адрес (Противоположной стороны)
+            "UF_CRM_1680092463": case.other_side.inn, # ИНН (Противоположной стороны)
+            "UF_CRM_1680092939": case.other_side.ogrn # ОГРН (противоположной стороны)
+
+
         }
 
         # Добавляем ФИО если удалось получить
